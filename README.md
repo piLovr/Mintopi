@@ -14,6 +14,13 @@ Clients with working connection:
 - [ ] (optional) Matrix
 - [ ] (optional) Signal
 
+Message decoding:
+- [ ] Whatsapp
+- [ ] Discord
+- [ ] Telegram
+- [ ] (optional) Matrix
+- [ ] (optional) Signal
+
 Listener Events:
 - [ ] Message
 - [ ] Room (Group-) Events (promote, demote, image updates)

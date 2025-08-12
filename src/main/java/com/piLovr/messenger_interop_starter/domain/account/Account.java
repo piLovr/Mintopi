@@ -2,10 +2,29 @@ package com.piLovr.messenger_interop_starter.domain.account;
 
 import com.piLovr.messenger_interop_starter.domain.common.Platform;
 import lombok.Getter;
+import lombok.NonNull;
 
 @Getter
 public class Account {
-    private Platform platform;
-    private String id;
+    private final Platform platform;
+    private final String id;
     private String pushName;
+
+    public Account(String id, Platform platform, String pushName) {
+        this.id = id;
+        this.platform = platform;
+
+        if(pushName != null) {
+            pushName = removeNonAsciiCharacters(pushName);
+        }else{
+            pushName = null;
+        }
+    }
+    public String removeNonAsciiCharacters(String input) {
+        return input.replaceAll("[^\\x00-\\x7F]", "");
+    }
+
+    public void setPushName(@NonNull String pushName) {
+        this.pushName = removeNonAsciiCharacters(pushName);
+    }
 }

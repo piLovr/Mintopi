@@ -1,0 +1,77 @@
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.github.pilovr</groupId>
+    <artifactId>mintopi-parent</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <properties>
+        <java.version>24</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <spring-boot.version>3.2.3</spring-boot.version>
+    </properties>
+
+    <modules>
+        <module>mintopi-core</module>
+        <module>mintopi-starter</module>
+        <module>mint-bot</module>
+        <module>cobalt</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spring Boot BOM -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Project modules -->
+            <dependency>
+                <groupId>com.github.pilovr</groupId>
+                <artifactId>mintopi-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.pilovr</groupId>
+                <artifactId>cobalt</artifactId>
+                <version>0.0.11-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.pilovr</groupId>
+                <artifactId>mintopi-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.pilovr</groupId>
+                <artifactId>mint-bot</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring-boot.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.11.0</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

@@ -1,7 +1,7 @@
 package com.github.pilovr.mintopi.starter.decoder.whatsapp;
 
-import com.github.pilovr.mintopi.core.message.attachment.AttachmentType;
-import com.github.pilovr.mintopi.core.message.MessageType;
+import com.github.pilovr.mintopi.starter.domain.message.MessageType;
+import com.github.pilovr.mintopi.starter.domain.message.attachment.AttachmentType;
 import it.auties.whatsapp.model.message.model.Message;
 
 import java.util.HashMap;

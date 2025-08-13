@@ -1,8 +1,9 @@
 package com.github.pilovr.mintopi.starter.listener;
 
-import com.github.pilovr.mintopi.core.event.MessageEvent;
 import com.github.pilovr.mintopi.starter.decoder.whatsapp.WhatsappEventDecoder;
-import com.github.pilovr.mintopi.core.common.Listener;
+import com.github.pilovr.mintopi.starter.domain.common.Listener;
+import com.github.pilovr.mintopi.starter.domain.event.MessageEvent;
+import com.github.pilovr.mintopi.starter.domain.message.ExtendedMessage;
 import it.auties.whatsapp.api.WhatsappListener;
 import it.auties.whatsapp.model.info.MessageInfo;
 
@@ -22,7 +23,11 @@ public class WhatsappInternalListener implements WhatsappListener {
     public void onNewMessage(MessageInfo info) {
         for (Listener listener : listeners) {
             try {
-                listener.onMessage((MessageEvent) decoder.decode(info));
+                MessageEvent e = (MessageEvent) decoder.decode(info);
+                listener.onMessage(e);
+                if(e.getMessage() instanceof ExtendedMessage){
+
+                }
             } catch (Exception e) {
                 //TODO: Handle exception properly
             }

@@ -1,5 +1,7 @@
 package com.github.pilovr.mintopi.starter.util;
 
+import com.github.pilovr.mintopi.starter.domain.common.Client;
+import com.github.pilovr.mintopi.starter.domain.message.ExtendedMessage;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.MultiFormatWriter;
@@ -7,8 +9,6 @@ import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
-import com.github.pilovr.mintopi.core.common.Client;
-import com.github.pilovr.mintopi.core.message.ExtendedMessage;
 import it.auties.qr.QrTerminal;
 import it.auties.whatsapp.api.WhatsappVerificationHandler;
 

@@ -1,25 +1,26 @@
 package com.github.pilovr.mintopi.starter.repository.storage;
 
-import com.github.pilovr.mintopi.core.account.Account;
-import com.github.pilovr.mintopi.core.common.Platform;
-import com.github.pilovr.mintopi.core.room.Room;
+import com.github.pilovr.mintopi.starter.domain.account.Account;
+import com.github.pilovr.mintopi.starter.domain.common.Platform;
+import com.github.pilovr.mintopi.starter.domain.room.Room;
 import kotlin.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 @Component
 public class CacheManager {
     StorageConfig storageConfig;
-    private Map<Pair<Platform, String>, Account> accounts;
-    private Map<Pair<Platform, String>, Room> rooms;
+    private final Map<Pair<Platform, String>, Account> accounts = new HashMap<>();
+    private final Map<Pair<Platform, String>, Room> rooms = new HashMap<>();
 
     @Autowired
     public CacheManager(StorageConfig storageConfig) {
         this.storageConfig = storageConfig;
-        if(storageConfig.getRoomDataCaching()) this.accounts = new java.util.HashMap<>();
-        this.rooms = new java.util.HashMap<>();
     }
 
     public Account getOrCreateAccount(String id, Platform platform, String pushName) {
@@ -29,7 +30,7 @@ public class CacheManager {
         }*/
         if (this.accounts.containsKey(key)) {
             Account a = this.accounts.get(key);
-            if(a.getPushName() != pushName){
+            if(!Objects.equals(a.getPushName(), pushName)){
                 a.setPushName(pushName);
             }
             return a;
@@ -41,9 +42,9 @@ public class CacheManager {
         }
     }
 
-    public Room getOrCreateRoom(String id, Platform platform, String name) {
+    public Room getOrCreateRoom(String id, Platform platform, String name, Map<Account, Set<String>> members) {
         if(!storageConfig.getRoomDataCaching()) {
-            return new Room(id, platform, name);
+            return new Room(id, platform, name, members);
         }
         Pair<Platform, String> key = new Pair<>(platform, id);
         if (this.rooms.containsKey(key)) {
@@ -53,7 +54,7 @@ public class CacheManager {
             }
             return r;
         } else {
-            Room room = new Room(id, platform, name);
+            Room room = new Room(id, platform, name, members);
             this.rooms.put(key, room);
             return room;
         }

@@ -1,6 +1,6 @@
 package com.github.pilovr.mintopi.starter.client;
 
-import com.github.pilovr.mintopi.core.common.Listener;
+import com.github.pilovr.mintopi.starter.domain.common.Listener;
 import it.auties.whatsapp.api.Whatsapp;
 import it.auties.whatsapp.api.WhatsappVerificationHandler;
 import it.auties.whatsapp.model.companion.CompanionDevice;

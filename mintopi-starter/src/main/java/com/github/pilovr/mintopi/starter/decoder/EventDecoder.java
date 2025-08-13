@@ -1,6 +1,7 @@
 package com.github.pilovr.mintopi.starter.decoder;
 
-import com.github.pilovr.mintopi.core.event.Event;
+
+import com.github.pilovr.mintopi.starter.domain.event.Event;
 
 public interface EventDecoder {
     <T> boolean supports(Class<T> inputType);

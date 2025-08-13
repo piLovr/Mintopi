@@ -14,7 +14,6 @@
     </properties>
 
     <modules>
-        <module>mintopi-core</module>
         <module>mintopi-starter</module>
         <module>mint-bot</module>
         <module>cobalt</module>
@@ -32,11 +31,6 @@
             </dependency>
 
             <!-- Project modules -->
-            <dependency>
-                <groupId>com.github.pilovr</groupId>
-                <artifactId>mintopi-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
             <dependency>
                 <groupId>com.github.pilovr</groupId>
                 <artifactId>cobalt</artifactId>

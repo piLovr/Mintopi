@@ -1,10 +1,10 @@
 package com.github.pilovr.mintopi.starter.client;
 
-import com.github.pilovr.mintopi.core.common.Client;
-import com.github.pilovr.mintopi.core.message.ExtendedMessage;
-import com.github.pilovr.mintopi.core.common.Listener;
+import com.github.pilovr.mintopi.starter.domain.common.Client;
+import com.github.pilovr.mintopi.starter.domain.common.Listener;
+import com.github.pilovr.mintopi.starter.domain.message.ExtendedMessage;
+import com.github.pilovr.mintopi.starter.domain.room.Room;
 import com.github.pilovr.mintopi.starter.listener.WhatsappInternalListener;
-import com.github.pilovr.mintopi.core.room.Room;
 import com.github.pilovr.mintopi.starter.util.QrHandler;
 import it.auties.whatsapp.api.Whatsapp;
 import it.auties.whatsapp.api.WhatsappWebHistoryPolicy;

@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-import com.github.pilovr.mintopi.core.event.Event;
+import com.github.pilovr.mintopi.starter.domain.event.Event;
 import org.jetbrains.annotations.NotNull;
 
 public class MultiEventDecoder {

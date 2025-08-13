@@ -1,11 +1,11 @@
 package com.github.pilovr.mintopi.starter.decoder.whatsapp;
 
-import com.github.pilovr.mintopi.core.account.Account;
-import com.github.pilovr.mintopi.core.common.Platform;
-import com.github.pilovr.mintopi.core.event.MessageEvent;
-import com.github.pilovr.mintopi.core.message.MessageBuilder;
-import com.github.pilovr.mintopi.core.message.attachment.AttachmentType;
-import com.github.pilovr.mintopi.core.message.MessageType;
+import com.github.pilovr.mintopi.starter.domain.account.Account;
+import com.github.pilovr.mintopi.starter.domain.common.Platform;
+import com.github.pilovr.mintopi.starter.domain.event.MessageEvent;
+import com.github.pilovr.mintopi.starter.domain.message.MessageBuilder;
+import com.github.pilovr.mintopi.starter.domain.message.MessageType;
+import com.github.pilovr.mintopi.starter.domain.message.attachment.AttachmentType;
 import com.github.pilovr.mintopi.starter.repository.storage.CacheManager;
 import it.auties.whatsapp.model.info.ChatMessageInfo;
 import it.auties.whatsapp.model.info.MessageInfo;
@@ -74,13 +74,7 @@ public class WhatsappEventDecoder extends MultiEventDecoder {
     }
 
     private void extractAttachments(Message base, AttachmentType aType, MessageBuilder builder) {
-        switch (aType) {
-            case AUDIO -> builder.setAudio(((AudioMessage) base).audio());
-            case VIDEO -> builder.setVideo(((VideoOrGifMessage) base).med());
-            case IMAGE -> builder.setImage(((ImageMessage) base).image());
-            case DOCUMENT -> builder.setDocument(((DocumentMessage) base).document());
-            default -> throw new IllegalArgumentException("Unsupported attachment type: " + aType);
-        }
+
     }
 
     private Map<Account, Set<String>> extractMembers(MessageInfo messageInfo) {

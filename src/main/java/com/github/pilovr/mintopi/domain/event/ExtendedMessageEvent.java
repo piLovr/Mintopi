@@ -1,10 +1,12 @@
 package com.github.pilovr.mintopi.domain.event;
 
 import com.github.pilovr.mintopi.domain.account.Account;
-import com.github.pilovr.mintopi.domain.common.Client;
-import com.github.pilovr.mintopi.domain.common.Platform;
+import com.github.pilovr.mintopi.client.Client;
+import com.github.pilovr.mintopi.client.Platform;
 import com.github.pilovr.mintopi.domain.message.ExtendedMessage;
 import com.github.pilovr.mintopi.domain.message.attachment.Attachment;
+import com.github.pilovr.mintopi.domain.message.attachment.AttachmentType;
+import com.github.pilovr.mintopi.domain.message.builder.ExtendedMessageBuilder;
 import com.github.pilovr.mintopi.domain.room.Room;
 import lombok.Getter;
 
@@ -14,18 +16,21 @@ import java.util.List;
 @Getter
 public class ExtendedMessageEvent extends RoomEvent {
     private final ExtendedMessage message;
+    private final Account sender;
 
     public ExtendedMessageEvent(Client client, String id, Account sender, Room room, Platform platform, Long timestamp, ExtendedMessage message) {
-        super(client, id, platform, timestamp, sender, room);
+        super(client, id, platform, timestamp, room);
         this.message = message;
+        this.sender = sender;
     }
 
     public ExtendedMessageEvent(MessageEvent messageEvent){
-        super(messageEvent.getClient(), messageEvent.getId(), messageEvent.getPlatform(), messageEvent.getTimestamp(),  messageEvent.getSender(), messageEvent.getRoom());
+        super(messageEvent.getClient(), messageEvent.getId(), messageEvent.getPlatform(), messageEvent.getTimestamp(), messageEvent.getRoom());
         if(!(messageEvent.getMessage() instanceof ExtendedMessage)) {
             throw new IllegalArgumentException("Cannot convert ExtendedMessageEvent to ExtendedMessageEvent");
         }
         this.message = (ExtendedMessage) (messageEvent.getMessage());
+        this.sender = messageEvent.getSender();
     }
 
     public List<byte[]> downloadAttachments(){

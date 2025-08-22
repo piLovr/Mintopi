@@ -1,6 +1,9 @@
-package com.github.pilovr.mintopi.domain.message;
+package com.github.pilovr.mintopi.domain.message.builder;
 
 import com.github.pilovr.mintopi.domain.account.Account;
+import com.github.pilovr.mintopi.domain.message.ExtendedMessage;
+import com.github.pilovr.mintopi.domain.message.Message;
+import com.github.pilovr.mintopi.domain.message.MessageType;
 import com.github.pilovr.mintopi.domain.message.attachment.Attachment;
 import lombok.Getter;
 
@@ -15,7 +18,7 @@ public class ExtendedMessageBuilder implements  MessageBuilder {
 
     private String text;
     private List<Account> mentions;
-    private ExtendedMessage quoted;
+    private Message quoted;
     private List<Attachment> attachments;
 
 
@@ -23,6 +26,10 @@ public class ExtendedMessageBuilder implements  MessageBuilder {
         this.messageType = messageType;
         this.id = id;
         this.Payload = payload;
+    }
+
+    public ExtendedMessageBuilder(){
+
     }
 
     public ExtendedMessage build() {
@@ -39,7 +46,7 @@ public class ExtendedMessageBuilder implements  MessageBuilder {
         return this;
     }
 
-    public ExtendedMessageBuilder quoted(ExtendedMessage quoted) {
+    public ExtendedMessageBuilder quoted(Message quoted) {
         this.quoted = quoted;
         return this;
     }

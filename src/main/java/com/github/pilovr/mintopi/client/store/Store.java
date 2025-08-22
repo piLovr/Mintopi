@@ -1,7 +1,7 @@
-package com.github.pilovr.mintopi.store;
+package com.github.pilovr.mintopi.client.store;
 
 import com.github.pilovr.mintopi.domain.account.Account;
-import com.github.pilovr.mintopi.domain.common.Platform;
+import com.github.pilovr.mintopi.client.Platform;
 import com.github.pilovr.mintopi.domain.room.Room;
 import org.springframework.stereotype.Service;
 

@@ -1,4 +1,4 @@
-package com.github.pilovr.mintopi.domain.common;
+package com.github.pilovr.mintopi.client;
 
 public enum Platform {
     Whatsapp,

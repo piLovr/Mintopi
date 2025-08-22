@@ -20,6 +20,8 @@ public class AttachmentBuilder {
 
     private Object downloadableMedia;
 
+    private byte[] downloadedMedia;
+
     public AttachmentBuilder(AttachmentType type) {
         this.type = type;
     }
@@ -90,8 +92,15 @@ public class AttachmentBuilder {
     }
 
     public Attachment build() {
-        return new Attachment(this) {
-            // You can implement any specific attachment type logic here
-        };
+        //Generate all values by byte[]
+        if(downloadedMedia != null && downloadableMedia == null) {
+            //todo???
+        }
+        return new Attachment(this);
+    }
+
+    public AttachmentBuilder downloadedMedia(byte[] downloadedMedia) {
+        this.downloadedMedia = downloadedMedia;
+        return this;
     }
 }

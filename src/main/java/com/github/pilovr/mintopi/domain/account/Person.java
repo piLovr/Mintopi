@@ -1,6 +1,6 @@
 package com.github.pilovr.mintopi.domain.account;
 
-import com.github.pilovr.mintopi.domain.common.Platform;
+import com.github.pilovr.mintopi.client.Platform;
 
 import java.util.Arrays;
 import java.util.HashMap;

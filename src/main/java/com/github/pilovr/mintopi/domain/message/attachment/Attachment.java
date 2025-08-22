@@ -4,7 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-public abstract class Attachment {
+public class Attachment {
+    private final AttachmentType type;
     private final String mediaUrl;
     private final int duration;
     private final int width;
@@ -22,6 +23,7 @@ public abstract class Attachment {
     @Setter
     private byte[] downloadedMedia;
     Attachment(AttachmentBuilder builder) {
+        this.type = builder.getType();
         this.mediaUrl = builder.getMediaUrl();
         this.duration = builder.getDuration();
         this.width = builder.getWidth();

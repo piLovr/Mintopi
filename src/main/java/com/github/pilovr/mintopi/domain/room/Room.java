@@ -1,7 +1,7 @@
 package com.github.pilovr.mintopi.domain.room;
 
 import com.github.pilovr.mintopi.domain.account.Account;
-import com.github.pilovr.mintopi.domain.common.Platform;
+import com.github.pilovr.mintopi.client.Platform;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;

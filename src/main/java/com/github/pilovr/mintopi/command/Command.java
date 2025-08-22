@@ -2,7 +2,7 @@ package com.github.pilovr.mintopi.command;
 
 import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
 import com.github.pilovr.mintopi.domain.event.ReactionMessageEvent;
-import com.github.pilovr.mintopi.domain.message.MessageBuilder;
+import com.github.pilovr.mintopi.domain.message.builder.MessageBuilder;
 
 import java.util.List;
 import java.util.Map;

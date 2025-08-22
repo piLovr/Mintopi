@@ -1,5 +1,6 @@
 package com.github.pilovr.mintopi.util;
 
+import com.github.pilovr.mintopi.domain.message.attachment.AttachmentType;
 import org.javatuples.Pair;
 
 import java.io.IOException;
@@ -9,6 +10,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MediaConverter {
+    private static final Map<AttachmentType, String> mimeTypes = new HashMap<>(
+            Map.of(
+                    AttachmentType.IMAGE, "image/jpeg",
+                    AttachmentType.VIDEO, "video/mp4",
+                    AttachmentType.AUDIO, "audio/mpeg",
+                    AttachmentType.GIF, "image/gif",
+                    AttachmentType.STICKER, "image/webp"
+            )
+    );
     private static Map<Pair<String, String>, String> execs = new HashMap<>(
             Map.of(
                     //Image to sticker
@@ -22,7 +32,7 @@ public class MediaConverter {
                     Pair.with("image/webp", "image/gif"), "magick %s -coalesce -layers optimize %s"
             )
     );
-    private static byte[] mediaConverter(byte[] inputMedia, String inputMime, String expectedMime){
+    public static byte[] convert(byte[] inputMedia, String inputMime, String expectedMime){
         String inputExtension = inputMime.substring(inputMime.lastIndexOf('/') + 1);
         String expectedExtension = expectedMime.substring(expectedMime.lastIndexOf('/') + 1);
 
@@ -76,5 +86,14 @@ public class MediaConverter {
         } catch (IOException e) {
             throw new RuntimeException("Failed to read or delete temp files", e);
         }
+    }
+
+    public static byte[] convert(byte[] inputMedia, AttachmentType inputType, AttachmentType expectedType) {
+        String inputMime = mimeTypes.get(inputType);
+        String expectedMime = mimeTypes.get(expectedType);
+        if (inputMime == null || expectedMime == null || !execs.containsKey(Pair.with(inputMime, expectedMime))) {
+            throw new IllegalArgumentException("Unsupported media type conversion: " + inputType + " to " + expectedType);
+        }
+        return convert(inputMedia, inputMime, expectedMime);
     }
 }

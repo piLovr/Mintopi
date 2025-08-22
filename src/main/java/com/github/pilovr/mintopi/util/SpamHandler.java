@@ -1,7 +1,7 @@
 package com.github.pilovr.mintopi.util;
 
 import com.github.pilovr.mintopi.domain.account.Account;
-import com.github.pilovr.mintopi.domain.common.Platform;
+import com.github.pilovr.mintopi.client.Platform;
 import com.github.pilovr.mintopi.domain.event.MessageEvent;
 import com.github.pilovr.mintopi.domain.room.Room;
 import com.github.pilovr.mintopi.domain.spring.properties.SpamProperties;

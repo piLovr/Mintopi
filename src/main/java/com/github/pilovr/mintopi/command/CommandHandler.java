@@ -2,7 +2,8 @@ package com.github.pilovr.mintopi.command;
 
 import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
 import com.github.pilovr.mintopi.domain.event.ReactionMessageEvent;
-import com.github.pilovr.mintopi.domain.message.CommandResultBuilder;
+import com.github.pilovr.mintopi.domain.message.builder.MessageBuilder;
+import com.github.pilovr.mintopi.util.LevenshteinUtil;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,7 +101,7 @@ public class CommandHandler {
      *
      * @param extendedMessageEvent The extendedMessageEvent to handle.
      */
-    public CommandResultBuilder handle(ExtendedMessageEvent extendedMessageEvent) {
+    public MessageBuilder handle(ExtendedMessageEvent extendedMessageEvent) {
         String input = extendedMessageEvent.getMessage().getText();
         if (input == null || input.trim().isEmpty()) {
             return null;
@@ -155,7 +156,7 @@ public class CommandHandler {
         return currentCommand.execute(extendedMessageEvent);
     }
 
-    public CommandResultBuilder handle(ReactionMessageEvent reactionMessageEvent) {
+    public MessageBuilder handle(ReactionMessageEvent reactionMessageEvent) {
         String emoji = reactionMessageEvent.getReactionMessage().getReaction();
         Command command = emojiCommands.get(emoji);
         if (command != null) {

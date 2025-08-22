@@ -1,9 +1,8 @@
-package com.github.pilovr.mintopi.listener;
+package com.github.pilovr.mintopi.client.listener;
 
 import com.github.pilovr.mintopi.decoder.whatsapp.WhatsappEventDecoder;
-import com.github.pilovr.mintopi.domain.common.Client;
-import com.github.pilovr.mintopi.domain.common.InternalListener;
-import com.github.pilovr.mintopi.domain.common.Listener;
+import com.github.pilovr.mintopi.client.Client;
+import com.github.pilovr.mintopi.domain.Listener;
 import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
 import com.github.pilovr.mintopi.domain.event.MessageEvent;
 import com.github.pilovr.mintopi.domain.event.StubEvent;

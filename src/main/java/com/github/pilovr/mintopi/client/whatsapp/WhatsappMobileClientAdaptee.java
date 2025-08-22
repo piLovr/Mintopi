@@ -1,8 +1,8 @@
 package com.github.pilovr.mintopi.client.whatsapp;
 
 import com.github.pilovr.mintopi.decoder.whatsapp.WhatsappEventDecoder;
-import com.github.pilovr.mintopi.listener.WhatsappInternalListener;
-import com.github.pilovr.mintopi.store.WhatsappStore;
+import com.github.pilovr.mintopi.client.listener.WhatsappInternalListener;
+import com.github.pilovr.mintopi.client.store.WhatsappStore;
 import it.auties.whatsapp.api.Whatsapp;
 import it.auties.whatsapp.api.WhatsappVerificationHandler;
 import it.auties.whatsapp.model.companion.CompanionDevice;

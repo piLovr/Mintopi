@@ -1,4 +1,4 @@
-package com.github.pilovr.mintopi.domain.common;
+package com.github.pilovr.mintopi.domain;
 
 import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
 import com.github.pilovr.mintopi.domain.event.MessageEvent;

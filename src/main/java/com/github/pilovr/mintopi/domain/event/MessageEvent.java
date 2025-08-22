@@ -1,8 +1,8 @@
 package com.github.pilovr.mintopi.domain.event;
 
 import com.github.pilovr.mintopi.domain.account.Account;
-import com.github.pilovr.mintopi.domain.common.Client;
-import com.github.pilovr.mintopi.domain.common.Platform;
+import com.github.pilovr.mintopi.client.Client;
+import com.github.pilovr.mintopi.client.Platform;
 import com.github.pilovr.mintopi.domain.message.Message;
 import com.github.pilovr.mintopi.domain.room.Room;
 import lombok.Getter;

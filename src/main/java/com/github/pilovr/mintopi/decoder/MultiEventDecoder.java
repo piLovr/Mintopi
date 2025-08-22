@@ -4,11 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 
-import com.github.pilovr.mintopi.domain.common.Client;
+import com.github.pilovr.mintopi.client.Client;
 import com.github.pilovr.mintopi.domain.event.Event;
 import org.jetbrains.annotations.NotNull;
 
-public class MultiEventDecoder {
+public abstract class MultiEventDecoder {
     private final Map<Class<?>, BiFunction<Client, ?,  ? extends Event>> registry = new HashMap<>();
 
     public <T> void register(@NotNull Class<T> inputType, @NotNull BiFunction<Client, T, ? extends Event> decoder) {
@@ -16,7 +16,10 @@ public class MultiEventDecoder {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> Event decode(Client client, @NotNull T input) {
+    public <T> Event decode(Client client, T input) {
+        if(input == null) {
+            return null;
+        }
         BiFunction<Client, T, ? extends Event> decoder = (BiFunction<Client, T, ? extends Event>) registry.get(input.getClass());
         if (decoder == null) {
             throw new IllegalArgumentException("No decoder for input type " + input.getClass());

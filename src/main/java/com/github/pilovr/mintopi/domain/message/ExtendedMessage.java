@@ -3,6 +3,7 @@ package com.github.pilovr.mintopi.domain.message;
 
 import com.github.pilovr.mintopi.domain.account.Account;
 import com.github.pilovr.mintopi.domain.message.attachment.Attachment;
+import com.github.pilovr.mintopi.domain.message.builder.ExtendedMessageBuilder;
 import lombok.Getter;
 
 import java.util.List;

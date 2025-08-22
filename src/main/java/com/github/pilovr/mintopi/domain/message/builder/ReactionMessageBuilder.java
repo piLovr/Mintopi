@@ -1,5 +1,8 @@
-package com.github.pilovr.mintopi.domain.message;
+package com.github.pilovr.mintopi.domain.message.builder;
 
+import com.github.pilovr.mintopi.domain.message.Message;
+import com.github.pilovr.mintopi.domain.message.MessageType;
+import com.github.pilovr.mintopi.domain.message.ReactionMessage;
 import lombok.Getter;
 
 @Getter

@@ -1,4 +1,4 @@
-package com.github.pilovr.mintopi.command;
+package com.github.pilovr.mintopi.util;
 
 import java.util.HashSet;
 import java.util.Set;

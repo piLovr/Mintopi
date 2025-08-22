@@ -1,13 +1,13 @@
-package com.github.pilovr.mintopi.store;
+package com.github.pilovr.mintopi.client.store;
 
 import com.github.pilovr.mintopi.domain.account.Account;
-import com.github.pilovr.mintopi.domain.common.Client;
-import com.github.pilovr.mintopi.domain.common.InternalListener;
-import com.github.pilovr.mintopi.domain.common.Listener;
-import com.github.pilovr.mintopi.domain.common.Platform;
+import com.github.pilovr.mintopi.client.Client;
+import com.github.pilovr.mintopi.client.listener.InternalListener;
+import com.github.pilovr.mintopi.domain.Listener;
+import com.github.pilovr.mintopi.client.Platform;
 import com.github.pilovr.mintopi.domain.event.StubEvent;
 import com.github.pilovr.mintopi.domain.room.Room;
-import com.github.pilovr.mintopi.listener.WhatsappInternalListener;
+import com.github.pilovr.mintopi.client.listener.WhatsappInternalListener;
 import it.auties.whatsapp.api.Whatsapp;
 import it.auties.whatsapp.model.chat.ChatMetadata;
 import it.auties.whatsapp.model.chat.ChatRole;

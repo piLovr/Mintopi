@@ -1,20 +1,20 @@
 package com.github.pilovr.mintopi.decoder.whatsapp;
 
 import com.github.pilovr.mintopi.domain.account.Account;
-import com.github.pilovr.mintopi.domain.common.Client;
-import com.github.pilovr.mintopi.domain.common.Platform;
+import com.github.pilovr.mintopi.client.Client;
+import com.github.pilovr.mintopi.client.Platform;
 import com.github.pilovr.mintopi.domain.event.MessageEvent;
 import com.github.pilovr.mintopi.domain.event.StubEvent;
 import com.github.pilovr.mintopi.domain.event.StubType;
-import com.github.pilovr.mintopi.domain.message.ExtendedMessageBuilder;
-import com.github.pilovr.mintopi.domain.message.MessageBuilder;
+import com.github.pilovr.mintopi.domain.message.builder.ExtendedMessageBuilder;
+import com.github.pilovr.mintopi.domain.message.builder.MessageBuilder;
 import com.github.pilovr.mintopi.domain.message.MessageType;
 import com.github.pilovr.mintopi.domain.message.attachment.Attachment;
 import com.github.pilovr.mintopi.domain.message.attachment.AttachmentBuilder;
 import com.github.pilovr.mintopi.domain.message.attachment.AttachmentType;
-import com.github.pilovr.mintopi.domain.message.ReactionMessageBuilder;
+import com.github.pilovr.mintopi.domain.message.builder.ReactionMessageBuilder;
 import com.github.pilovr.mintopi.domain.room.Room;
-import com.github.pilovr.mintopi.store.WhatsappStore;
+import com.github.pilovr.mintopi.client.store.WhatsappStore;
 import it.auties.whatsapp.model.info.*;
 import com.github.pilovr.mintopi.decoder.MultiEventDecoder;
 import it.auties.whatsapp.model.jid.Jid;
@@ -228,7 +228,6 @@ public class WhatsappEventDecoder extends MultiEventDecoder {
                 Platform.Whatsapp,
                 timestamp,
                 null,
-                room,
                 stubType
         );
     }

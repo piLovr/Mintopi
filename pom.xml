@@ -11,7 +11,7 @@
     <groupId>com.github.pilovr</groupId>
     <artifactId>mintopi</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>mintopi-starter</name>
+    <name>mintopi</name>
     <description>Interoperability for Messengers and fully featured REST API + CommandStructure</description>
     <url/>
     <licenses>

@@ -1,0 +1,23 @@
+module mintopi.starter {
+    exports com.github.pilovr.mintopi.starter.domain.account;
+    exports com.github.pilovr.mintopi.starter.domain.message;
+    exports com.github.pilovr.mintopi.starter.domain.message.attachment;
+    exports com.github.pilovr.mintopi.starter.domain.room;
+    exports com.github.pilovr.mintopi.starter.domain.common;
+    exports com.github.pilovr.mintopi.starter.domain.event;
+    exports com.github.pilovr.mintopi.starter.client;
+
+
+    requires annotations;
+    requires com.google.zxing;
+    requires com.google.zxing.javase;
+    requires it.auties.qr;
+    requires javatuples;
+    requires kotlin.stdlib;
+    requires static lombok;
+    requires spring.beans;
+    requires spring.boot;
+    requires spring.context;
+    requires it.auties.cobalt;
+    requires java.sql;
+}

@@ -29,6 +29,4 @@ public interface Client {
     Store getStore();
 
     CompletableFuture<Message> sendMediaConversionUsingQueue(ExtendedMessageEvent origin, AttachmentType target, int attachmentIndex, int timeout, boolean quote);
-
-    void setTimeoutRunnable(MessageRunnable runnable);
 }

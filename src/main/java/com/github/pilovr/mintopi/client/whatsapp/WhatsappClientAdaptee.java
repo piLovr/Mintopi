@@ -189,9 +189,4 @@ public class WhatsappClientAdaptee implements Client {
 
         return resultFuture;
     }
-
-    @Override
-    public void setTimeoutRunnable(MessageRunnable runnable) {
-        internalListener.setOnTimeoutDeserved(runnable);
-    }
 }

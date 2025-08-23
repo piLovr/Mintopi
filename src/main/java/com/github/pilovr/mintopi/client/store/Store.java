@@ -3,7 +3,7 @@ package com.github.pilovr.mintopi.client.store;
 import com.github.pilovr.mintopi.domain.account.Account;
 import com.github.pilovr.mintopi.client.Platform;
 import com.github.pilovr.mintopi.domain.room.Room;
-import com.github.pilovr.mintopi.util.MessageDoorman;
+import com.github.pilovr.mintopi.client.tools.CommandRateLimiter;
 import lombok.Getter;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +16,7 @@ public abstract class Store {
     protected Map<String, Room> rooms;
     protected Map<String, Account> accounts;
     @Getter
-    protected MessageDoorman messageDoorman;
+    protected CommandRateLimiter messageDoorman;
 
     public Room getOrCreateRoom(String id, Platform platform, String name) {
         Room existingRoom = rooms.get(id);

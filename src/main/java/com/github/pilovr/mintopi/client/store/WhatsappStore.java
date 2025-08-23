@@ -2,13 +2,12 @@ package com.github.pilovr.mintopi.client.store;
 
 import com.github.pilovr.mintopi.domain.account.Account;
 import com.github.pilovr.mintopi.client.Client;
-import com.github.pilovr.mintopi.client.listener.InternalListener;
 import com.github.pilovr.mintopi.domain.Listener;
 import com.github.pilovr.mintopi.client.Platform;
 import com.github.pilovr.mintopi.domain.event.StubEvent;
 import com.github.pilovr.mintopi.domain.room.Room;
 import com.github.pilovr.mintopi.client.listener.WhatsappInternalListener;
-import com.github.pilovr.mintopi.util.MessageDoorman;
+import com.github.pilovr.mintopi.client.tools.CommandRateLimiter;
 import it.auties.whatsapp.api.Whatsapp;
 import it.auties.whatsapp.model.chat.ChatMetadata;
 import it.auties.whatsapp.model.chat.ChatRole;
@@ -28,7 +27,7 @@ public class WhatsappStore extends Store{
     private Whatsapp api;
     private WhatsappInternalListener internalListener;
 
-    public WhatsappStore(MessageDoorman messageDoorman){
+    public WhatsappStore(CommandRateLimiter messageDoorman){
         this.messageDoorman = messageDoorman;
     }
 

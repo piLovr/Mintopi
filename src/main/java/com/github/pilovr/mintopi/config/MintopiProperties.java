@@ -44,7 +44,7 @@ public class MintopiProperties {
         private final boolean generateHelpCommand = true;
 
         @Getter
-        public static class ErrorMessages {
+        public static class ErrorMessages { //TODO put this shi in an external class. User needs to be able to be multilingual!!!
             private final String unknownCommand = "Unknown command. Type {prefix}help for a list of commands.";
             private final String unknownSubcommand = "Unknown subcommand. Type {prefix}help {command} for a list of subcommands.";
             private final String closestCommand = "Unknown command. Did you mean one of [{suggestions}]?";

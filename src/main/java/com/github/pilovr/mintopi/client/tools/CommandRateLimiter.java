@@ -1,4 +1,4 @@
-package com.github.pilovr.mintopi.util;
+package com.github.pilovr.mintopi.client.tools;
 
 import com.github.pilovr.mintopi.config.MintopiProperties;
 import lombok.Setter;
@@ -16,7 +16,7 @@ import java.util.HashSet;
         havingValue = "true",
         matchIfMissing = false
 )
-public class MessageDoorman {
+public class CommandRateLimiter {
     private final MintopiProperties.SpamHandler spamProperties;
     private final HashSet<String> spamSet = new HashSet<>();
     private final HashMap<String, Integer> heavySpamSet = new HashMap<>();
@@ -28,7 +28,7 @@ public class MessageDoorman {
 
 
     @Autowired
-    public MessageDoorman(MintopiProperties mintopiProperties) {
+    public CommandRateLimiter(MintopiProperties mintopiProperties) {
         this.spamProperties = mintopiProperties.getSpamHandler();
     }
 

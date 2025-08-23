@@ -15,7 +15,7 @@ import com.github.pilovr.mintopi.domain.event.StubEvent;
 import com.github.pilovr.mintopi.domain.message.ExtendedMessage;
 import com.github.pilovr.mintopi.domain.message.ReactionMessage;
 import com.github.pilovr.mintopi.domain.message.SpecialMessage;
-import com.github.pilovr.mintopi.util.MessageDoorman;
+import com.github.pilovr.mintopi.client.tools.CommandRateLimiter;
 import it.auties.whatsapp.api.Whatsapp;
 import it.auties.whatsapp.api.WhatsappDisconnectReason;
 import it.auties.whatsapp.api.WhatsappListener;
@@ -40,12 +40,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class WhatsappInternalListener implements WhatsappListener, InternalListener {
     private final List<Listener> listeners = new CopyOnWriteArrayList<>();
     private final WhatsappEventDecoder decoder;
-    private final MessageDoorman messageDoorman;
+    private final CommandRateLimiter messageDoorman;
     private final CommandHandler commandHandler;
     private final MintopiProperties properties;
-
-    @Setter
-    private MessageRunnable onTimeoutDeserved;
 
     @Setter
     private WhatsappStore whatsappStore;
@@ -54,7 +51,7 @@ public class WhatsappInternalListener implements WhatsappListener, InternalListe
     private Client client;
 
     @Autowired
-    public WhatsappInternalListener(WhatsappEventDecoder decoder, MessageDoorman messageDoorman, CommandHandler commandHandler, MintopiProperties properties){
+    public WhatsappInternalListener(WhatsappEventDecoder decoder, CommandRateLimiter messageDoorman, CommandHandler commandHandler, MintopiProperties properties){
         this.decoder = decoder;
         this.messageDoorman = messageDoorman;
         this.commandHandler = commandHandler;
@@ -89,7 +86,7 @@ public class WhatsappInternalListener implements WhatsappListener, InternalListe
         }
         Pair<Boolean, Boolean> shouldDecodeAndFreshTimeout = messageDoorman.shouldDecode(info.senderJid().toString(), info.parentJid().toString());
         if(shouldDecodeAndFreshTimeout.getValue1()) {
-            if(onTimeoutDeserved != null) onTimeoutDeserved.run(whatsappStore.getOrCreateRoom(info.parentJid().toString(), Platform.Whatsapp, null));
+            client.sendMessage(whatsappStore.getOrCreateRoom(info.parentJid().toString(), Platform.Whatsapp, null), properties.getCommandHandler().getErrorMessages().getRateLimited());
         }
         if(!shouldDecodeAndFreshTimeout.getValue0()) return;
         try {

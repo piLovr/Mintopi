@@ -1,10 +1,16 @@
 package com.github.pilovr.mintopi.command;
 
+import com.github.pilovr.mintopi.client.Client;
+import com.github.pilovr.mintopi.config.MintopiProperties;
 import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
 import com.github.pilovr.mintopi.domain.event.ReactionMessageEvent;
+import com.github.pilovr.mintopi.domain.message.CommandMessageProperties;
+import com.github.pilovr.mintopi.domain.message.Message;
 import com.github.pilovr.mintopi.domain.message.builder.MessageBuilder;
+import com.github.pilovr.mintopi.domain.room.Room;
 import com.github.pilovr.mintopi.util.LevenshteinUtil;
 import jakarta.annotation.PostConstruct;
+import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,16 +26,19 @@ public class CommandHandler {
 
     private static final Logger log = LoggerFactory.getLogger(CommandHandler.class);
 
-    private static final int LEVENSHTEIN_THRESHOLD = 2;
 
     private final Map<String, Command> rootCommands = new HashMap<>();
     private final List<Command> allCommands;
 
     private final Map<String, Command> emojiCommands = new HashMap<>();
+    private final MintopiProperties.CommandHandler properties;
+    private final MintopiProperties.CommandHandler.ErrorMessages errorMessages;
 
     @Autowired
-    public CommandHandler(List<Command> allCommands) {
+    public CommandHandler(List<Command> allCommands, MintopiProperties properties) {
         this.allCommands = allCommands;
+        this.properties = properties.getCommandHandler();
+        this.errorMessages = this.properties.getErrorMessages();
     }
 
     /**
@@ -101,67 +110,128 @@ public class CommandHandler {
      *
      * @param extendedMessageEvent The extendedMessageEvent to handle.
      */
-    public MessageBuilder handle(ExtendedMessageEvent extendedMessageEvent) {
+    public void handle(ExtendedMessageEvent extendedMessageEvent) { //todo line-by-line produces infinite messages!!!
         String input = extendedMessageEvent.getMessage().getText();
         if (input == null || input.trim().isEmpty()) {
-            return null;
+            return;
         }
 
-        String commandLine = input.startsWith("#") ? input.substring(1) : input;
-        String[] parts = commandLine.trim().split("\\s+");
-        if (parts.length == 0 || parts[0].isBlank()) {
-            return null;
+        CommandMessageProperties commandProperties;
+
+        if (extendedMessageEvent.getCommandMessageProperties() == null) {
+            if (properties.isSplitCommandByLines()) {
+                commandProperties = extendedMessageEvent.getCommandMessageProperties(true);
+                for (ExtendedMessageEvent event : commandProperties.refactorToMessageEvents()) {
+                    handle(event);
+                }
+                return;
+            } else {
+                commandProperties = extendedMessageEvent.getCommandMessageProperties(false);
+            }
+        } else {
+            commandProperties = extendedMessageEvent.getCommandMessageProperties();
         }
 
-        String rootCommandName = parts[0];
+        Client client = extendedMessageEvent.getClient();
+        client.getStore().getMessageDoorman().register(extendedMessageEvent.getSender().getId(), extendedMessageEvent.getRoom().getId()); //register user in doorman
+        Room room = extendedMessageEvent.getRoom();
+
+        String rootCommandName = commandProperties.getCommand();
         Command currentCommand = rootCommands.get(rootCommandName);
+        int levenshteinThreshold = properties.getLevenshteinThreshold();
+        int levenshteinSuggestionThreshold = properties.getLevenshteinSuggestionThreshold() + levenshteinThreshold;
 
         if (currentCommand == null) {
-            Set<String> suggestions = LevenshteinUtil.getClosestStrings(rootCommands.keySet(), rootCommandName, LEVENSHTEIN_THRESHOLD);
-            if (!suggestions.isEmpty()) {
-                String matchedName = suggestions.iterator().next();
-                log.info("Assuming root command '{}' for input '{}'", matchedName, rootCommandName);
-                currentCommand = rootCommands.get(matchedName);
-            } else {
-                log.warn("Unknown command: {}", rootCommandName);
-                return null; //new CommandResultBuilder().withText("Unknown command: " + rootCommandName);
+            if (levenshteinThreshold > 0) {
+                Pair<Set<String>, Integer> suggestions = LevenshteinUtil.getClosestStrings(rootCommands.keySet(), rootCommandName, levenshteinSuggestionThreshold);
+                if (!suggestions.getValue0().isEmpty()) {
+                    String matchedName = suggestions.getValue0().iterator().next();
+                    if (suggestions.getValue1() <= levenshteinThreshold) {
+                        log.info("Assuming root command '{}' for input '{}'", matchedName, rootCommandName);
+                        currentCommand = rootCommands.get(matchedName);
+                    } else {
+                        String suggestionText = String.join(", ", suggestions.getValue0());
+                        String message = errorMessages.getClosestCommand().replace("{suggestions}", suggestionText).replace("{suggestion}", matchedName);
+                        client.sendMessage(room, message);
+                        return;
+                    }
+                } else {
+                    log.warn("Unknown command: {}", rootCommandName);
+                    client.sendMessage(room, errorMessages.getUnknownCommand().replace("{prefix}", commandProperties.getPrefix()));
+                    return; //new CommandResultBuilder().withText("Unknown command: " + rootCommandName);
+                }
             }
         }
-
-        int currentIndex = 1;
-        while (currentIndex < parts.length) {
-            String subCommandName = parts[currentIndex];
+        StringBuilder commandPath = new StringBuilder(currentCommand != null ? currentCommand.getName() : rootCommandName);
+        while (commandProperties.getArgs().iterator().hasNext()) {
+            String subCommandName = commandProperties.getArgs().iterator().next();
+            assert currentCommand != null;
             Map<String, Command> subCommands = currentCommand.getSubCommands();
             Command subCommand = subCommands.get(subCommandName);
 
             if (subCommand != null) {
                 currentCommand = subCommand;
-                currentIndex++;
+                commandPath.append(" ").append(subCommandName);
                 continue;
             }
 
-            // If no direct match, try fuzzy matching
-            Set<String> suggestions = LevenshteinUtil.getClosestStrings(subCommands.keySet(), subCommandName, LEVENSHTEIN_THRESHOLD);
-            if (!suggestions.isEmpty()) {
-                String matchedName = suggestions.iterator().next();
-                log.info("Assuming subcommand '{}' for input '{}' under parent '{}'", matchedName, subCommandName, currentCommand.getName());
-                currentCommand = subCommands.get(matchedName);
-                currentIndex++;
+            Pair<Set<String>, Integer> suggestions = LevenshteinUtil.getClosestStrings(subCommands.keySet(), subCommandName, levenshteinSuggestionThreshold);
+            if (!suggestions.getValue0().isEmpty()) {
+                String matchedName = suggestions.getValue0().iterator().next();
+                if (suggestions.getValue1() <= levenshteinThreshold) {
+                    log.info("Assuming subcommand '{}' for input '{}' under parent '{}'", matchedName, subCommandName, currentCommand.getName());
+                    currentCommand = subCommands.get(matchedName);
+                } else {
+                    String suggestionText = String.join(", ", suggestions.getValue0());
+                    String message = errorMessages.getClosestCommand().replace("{prefix}", commandProperties.getPrefix()).replace("{path}", commandPath).replace("{suggestions}", suggestionText).replace("{suggestion}", matchedName);
+                    client.sendMessage(room, message);
+                    return;
+                }
             } else {
-                log.info("No matching subcommand found for input '{}'", subCommandName);
-                break;
+                log.warn("Unknown subcommand '{}' under path '{}'", subCommandName, commandPath);
+                client.sendMessage(room, errorMessages.getUnknownCommand().replace("{prefix}", commandProperties.getPrefix()));
+                return; //new CommandResultBuilder().withText("Unknown command: " + rootCommandName);
             }
         }
 
-        return currentCommand.execute(extendedMessageEvent);
+        assert currentCommand != null;
+        MessageBuilder executed;
+        try {
+            executed = currentCommand.execute(extendedMessageEvent);
+        } catch (RuntimeException e) {
+            log.error("Error executing command '{}': {}", currentCommand.getName(), e.getMessage(), e);
+            client.sendMessage(room, errorMessages.getExecutionError());
+            return;
+        }
+        if (executed == null) {
+            log.error("Command '{}' returned null result, this is a bug.", currentCommand.getName());
+            client.sendMessage(room, errorMessages.getExecutionError());
+            return;
+        }
+
+        client.sendMessage(room, executed.build());
     }
 
-    public MessageBuilder handle(ReactionMessageEvent reactionMessageEvent) {
+    public void handle(ReactionMessageEvent reactionMessageEvent) {
         String emoji = reactionMessageEvent.getReactionMessage().getReaction();
         Command command = emojiCommands.get(emoji);
         if (command != null) {
-            return command.execute(reactionMessageEvent);
+            Client client = reactionMessageEvent.getClient();
+            client.getStore().getMessageDoorman().register(reactionMessageEvent.getSender().getId(), reactionMessageEvent.getRoom().getId()); //register user in doorman
+            MessageBuilder executed;
+            try {
+                executed = command.execute(reactionMessageEvent);
+            } catch (RuntimeException e) {
+                log.error("Error executing command '{}': {}", command.getName(), e.getMessage(), e);
+                client.sendMessage(reactionMessageEvent.getRoom(), errorMessages.getExecutionError());
+                return;
+            }
+            if (executed == null) {
+                log.error("Command '{}' returned null result, this is a bug.", command.getName());
+                client.sendMessage(reactionMessageEvent.getRoom(), errorMessages.getExecutionError());
+                return;
+            }
+            client.sendMessage(reactionMessageEvent.getRoom(), executed.build());
         }
-        return null;
     }
 }

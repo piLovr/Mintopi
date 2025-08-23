@@ -1,7 +1,11 @@
 package com.github.pilovr.mintopi.client.whatsapp;
 
+import com.github.pilovr.mintopi.client.tools.MediaQueue;
+import com.github.pilovr.mintopi.client.tools.MediaQueueObjectWithFuture;
 import com.github.pilovr.mintopi.decoder.whatsapp.WhatsappEventDecoder;
+import com.github.pilovr.mintopi.domain.MessageRunnable;
 import com.github.pilovr.mintopi.domain.account.Account;
+import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
 import com.github.pilovr.mintopi.domain.message.ExtendedMessage;
 import com.github.pilovr.mintopi.domain.message.Message;
 import com.github.pilovr.mintopi.domain.message.ReactionMessage;
@@ -10,6 +14,9 @@ import com.github.pilovr.mintopi.client.store.WhatsappStore;
 import com.github.pilovr.mintopi.client.Client;
 import com.github.pilovr.mintopi.domain.Listener;
 import com.github.pilovr.mintopi.domain.event.MessageEvent;
+import com.github.pilovr.mintopi.domain.message.attachment.AttachmentBuilder;
+import com.github.pilovr.mintopi.domain.message.attachment.AttachmentType;
+import com.github.pilovr.mintopi.domain.message.builder.ExtendedMessageBuilder;
 import com.github.pilovr.mintopi.domain.room.Room;
 import com.github.pilovr.mintopi.client.listener.WhatsappInternalListener;
 import com.github.pilovr.mintopi.util.QrHandler;
@@ -25,6 +32,8 @@ import it.auties.whatsapp.model.message.standard.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.concurrent.CompletableFuture;
+
 
 public class WhatsappClientAdaptee implements Client {
     @Getter
@@ -37,12 +46,15 @@ public class WhatsappClientAdaptee implements Client {
 
     @Getter @Setter
     protected boolean connected;
-    public WhatsappClientAdaptee(String alias, WhatsappInternalListener internalListener, WhatsappStore store, WhatsappEventDecoder decoder) {
+    private MediaQueue mediaQueue;
+    public WhatsappClientAdaptee(String alias, WhatsappInternalListener internalListener, WhatsappStore store, WhatsappEventDecoder decoder, MediaQueue mediaQueue) {
         this.alias = alias;
 
         this.store = store;
         this.internalListener = internalListener;
         this.decoder = decoder;
+
+        this.mediaQueue = mediaQueue;
 
         store.setClient(this);
         store.setApi(api);
@@ -156,5 +168,30 @@ public class WhatsappClientAdaptee implements Client {
             return api.downloadMedia(mediaMessage);
         }
         throw new RuntimeException("unknown media payload type: " + payload.getClass());
+    }
+
+    @Override
+    public CompletableFuture<Message> sendMediaConversionUsingQueue(ExtendedMessageEvent origin, AttachmentType target, int attachmentIndex, int timeout, boolean quote) {
+        CompletableFuture<Message> resultFuture = new CompletableFuture<>();
+
+        CompletableFuture<byte[]> future = mediaQueue.addToQueue(origin, target, attachmentIndex, timeout);
+        future.thenAccept(convertedMedia -> {
+            ExtendedMessageBuilder builder = new ExtendedMessageBuilder()
+                    .addAttachment(new AttachmentBuilder(target).downloadedMedia(convertedMedia).build())
+                    .quoted(quote ? origin.getMessage() : null);
+            Room room = origin.getRoom();
+            resultFuture.complete(sendMessage(room, builder.build()));
+        }).exceptionally(ex -> {
+            ex.printStackTrace();
+            resultFuture.completeExceptionally(ex);
+            return null;
+        });
+
+        return resultFuture;
+    }
+
+    @Override
+    public void setTimeoutRunnable(MessageRunnable runnable) {
+        internalListener.setOnTimeoutDeserved(runnable);
     }
 }

@@ -12,12 +12,14 @@ import java.util.List;
 public non-sealed class ExtendedMessage extends Message {
     private final String text;
     private final List<Account> mentions;
-    private final ExtendedMessage quoted;
+    private final Account quotedMessageSender;
+    private final Message quoted;
     private final List<Attachment> attachments;
 
     private int currentAttachment = 0;
 
-    public ExtendedMessage(MessageType type, String id, Object payload, String text, List<Account> mentions, ExtendedMessage quoted, List<Attachment> attachments) {
+    public ExtendedMessage(MessageType type, String id, Object payload, String text, List<Account> mentions, Account quotedMessageSender, ExtendedMessage quoted, List<Attachment> attachments) {
+        this.quotedMessageSender = quotedMessageSender;
         this.type = type;
         this.id = id;
         this.payload = payload;
@@ -29,6 +31,7 @@ public non-sealed class ExtendedMessage extends Message {
     }
 
     public ExtendedMessage(ExtendedMessageBuilder builder) {
+        this.quotedMessageSender = builder.getQuotedMessageSender();
         this.type = builder.getMessageType();
         this.id = builder.getId();
         this.payload = builder.getPayload();

@@ -1,5 +1,6 @@
 package com.github.pilovr.mintopi.client.whatsapp;
 
+import com.github.pilovr.mintopi.client.tools.MediaQueue;
 import com.github.pilovr.mintopi.decoder.whatsapp.WhatsappEventDecoder;
 import com.github.pilovr.mintopi.client.listener.WhatsappInternalListener;
 import com.github.pilovr.mintopi.client.store.WhatsappStore;
@@ -11,8 +12,8 @@ import java.util.Scanner;
 
 public class WhatsappMobileClientAdaptee extends WhatsappClientAdaptee {
     private long phoneNumber;
-    public WhatsappMobileClientAdaptee(String alias, WhatsappInternalListener listener, WhatsappStore object, WhatsappEventDecoder decoder) {
-        super(alias, listener, wStoreOP.getObject(), decoder);
+    public WhatsappMobileClientAdaptee(String alias, WhatsappInternalListener listener, WhatsappStore object, WhatsappEventDecoder decoder, MediaQueue mediaQueue) {
+        super(alias, listener, wStoreOP.getObject(), decoder, mediaQueue);
     }
 
     @Override

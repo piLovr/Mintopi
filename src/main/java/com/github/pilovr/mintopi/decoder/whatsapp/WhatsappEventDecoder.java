@@ -6,6 +6,7 @@ import com.github.pilovr.mintopi.client.Platform;
 import com.github.pilovr.mintopi.domain.event.MessageEvent;
 import com.github.pilovr.mintopi.domain.event.StubEvent;
 import com.github.pilovr.mintopi.domain.event.StubType;
+import com.github.pilovr.mintopi.domain.message.ExtendedMessage;
 import com.github.pilovr.mintopi.domain.message.builder.ExtendedMessageBuilder;
 import com.github.pilovr.mintopi.domain.message.builder.MessageBuilder;
 import com.github.pilovr.mintopi.domain.message.MessageType;
@@ -15,6 +16,7 @@ import com.github.pilovr.mintopi.domain.message.attachment.AttachmentType;
 import com.github.pilovr.mintopi.domain.message.builder.ReactionMessageBuilder;
 import com.github.pilovr.mintopi.domain.room.Room;
 import com.github.pilovr.mintopi.client.store.WhatsappStore;
+import com.github.pilovr.mintopi.util.MessageDoorman;
 import it.auties.whatsapp.model.info.*;
 import com.github.pilovr.mintopi.decoder.MultiEventDecoder;
 import it.auties.whatsapp.model.jid.Jid;
@@ -25,6 +27,7 @@ import it.auties.whatsapp.model.message.model.MessageContainer;
 import it.auties.whatsapp.model.message.standard.*;
 import it.auties.whatsapp.model.node.Node;
 import lombok.Setter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +39,7 @@ public class WhatsappEventDecoder extends MultiEventDecoder {
     @Setter
     private WhatsappStore whatsappStore;
 
+    @Autowired
     public WhatsappEventDecoder() {
         this.register(ChatMessageInfo.class, this::decodeChatMessageInfo);
         this.register(MessageInfo.class, this::decodeMessageInfo);
@@ -58,9 +62,12 @@ public class WhatsappEventDecoder extends MultiEventDecoder {
     private MessageEvent decodeChatMessageInfo(Client client, ChatMessageInfo chatMessageInfo){
         String id = chatMessageInfo.id();
         Jid sender = chatMessageInfo.senderJid();
-        Account account = whatsappStore.getOrCreateAccount(sender.toString(), Platform.Whatsapp, chatMessageInfo.pushName().orElse(null));
-
         Jid parent = chatMessageInfo.parentJid();
+
+        Account account = whatsappStore.getOrCreateAccount(
+                sender.toString(),
+                Platform.Whatsapp,
+                chatMessageInfo.pushName().orElse(null));
         Room room = whatsappStore.getOrCreateRoom(
                 parent.toString(),
                 Platform.Whatsapp,
@@ -78,7 +85,9 @@ public class WhatsappEventDecoder extends MultiEventDecoder {
                 if(chatMessageInfo.message().contentWithContext().isPresent() && chatMessageInfo.message().contentWithContext().get().contextInfo().isPresent()) {
                     if(chatMessageInfo.quotedMessage().isPresent()){
                         QuotedMessageInfo q = chatMessageInfo.quotedMessage().get();
-                        extendedMessageBuilder.quoted(decodeMessageContainer(q.id(), q, q.message()).build());
+                        extendedMessageBuilder.quoted(decodeMessageContainer(q.id(), q, q.message())
+                                .quotedMessageSender(whatsappStore.getOrCreateAccount(q.senderJid().toString(), Platform.Whatsapp, null))
+                                .build());
                     }
                 }
                 yield extendedMessageBuilder;

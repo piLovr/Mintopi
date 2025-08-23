@@ -1,5 +1,7 @@
 package com.github.pilovr.mintopi.util;
 
+import org.javatuples.Pair;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,7 +32,7 @@ public class LevenshteinUtil {
         return Math.min(Math.min(a, b), c);
     }
 
-    public static Set<String> getClosestStrings(Set<String> strings, String target, int threshold){
+    public static Pair<Set<String>, Integer> getClosestStrings(Set<String> strings, String target, int threshold){
         Set<String> closests = new HashSet<>();
         int currentDistance = threshold;
         for(String s : strings){
@@ -43,7 +45,7 @@ public class LevenshteinUtil {
                 closests.add(s);
             }
         }
-        return closests;
+        return Pair.with(closests, currentDistance);
     }
 
 }

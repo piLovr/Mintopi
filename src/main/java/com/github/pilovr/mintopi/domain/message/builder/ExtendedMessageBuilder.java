@@ -14,10 +14,11 @@ import java.util.List;
 public class ExtendedMessageBuilder implements  MessageBuilder {
     private MessageType messageType;
     private String id;
-    private Object Payload;
+    private Object payload;
 
     private String text;
     private List<Account> mentions;
+    private Account quotedMessageSender;
     private Message quoted;
     private List<Attachment> attachments;
 
@@ -25,7 +26,18 @@ public class ExtendedMessageBuilder implements  MessageBuilder {
     public ExtendedMessageBuilder(MessageType messageType, String id, Object payload) {
         this.messageType = messageType;
         this.id = id;
-        this.Payload = payload;
+        this.payload = payload;
+    }
+
+    public ExtendedMessageBuilder(ExtendedMessage message){
+        this.text = message.getText();
+        this.mentions = message.getMentions();
+        this.quoted = message.getQuoted();
+        this.attachments = message.getAttachments();
+        this.messageType = message.getType();
+        this.quotedMessageSender = message.getQuotedMessageSender();
+        this.id = message.getId();
+        this.payload = message.getPayload();
     }
 
     public ExtendedMessageBuilder(){
@@ -66,6 +78,11 @@ public class ExtendedMessageBuilder implements  MessageBuilder {
             attachments = new ArrayList<>();
         }
         attachments.add(attachment);
+        return this;
+    }
+
+    public ExtendedMessageBuilder quotedMessageSender(Account quotedMessageSender) {
+        this.quotedMessageSender = quotedMessageSender;
         return this;
     }
 }

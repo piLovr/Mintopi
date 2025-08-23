@@ -1,5 +1,6 @@
 package com.github.pilovr.mintopi.client;
 
+import com.github.pilovr.mintopi.client.tools.MediaQueue;
 import com.github.pilovr.mintopi.client.whatsapp.WhatsappClientAdaptee;
 import com.github.pilovr.mintopi.client.whatsapp.WhatsappMobileClientAdaptee;
 import com.github.pilovr.mintopi.decoder.whatsapp.WhatsappEventDecoder;
@@ -19,22 +20,25 @@ public class ClientFactory {
     private final ObjectProvider<WhatsappInternalListener> wIlOP;
     private final ObjectProvider<WhatsappStore> wStoreOP;
     private final Set<Client> clients = ConcurrentHashMap.newKeySet();
+    private final MediaQueue mediaQueue;
 
     @Autowired
     public ClientFactory(
             ObjectProvider<WhatsappEventDecoder> decoder,
             ObjectProvider<WhatsappInternalListener> wIlOP,
-            ObjectProvider<WhatsappStore> wStoreOP
+            ObjectProvider<WhatsappStore> wStoreOP,
+            MediaQueue mediaQueue
     ) {
         this.decoderOP = decoder;
         this.wIlOP = wIlOP;
         this.wStoreOP = wStoreOP;
+        this.mediaQueue = mediaQueue;
     }
 
     public Client createClient(Platform platform, String alias){
         Client c =  switch(platform){
             case Whatsapp, WhatsappMobile ->
-                    platform == Platform.Whatsapp ? new WhatsappClientAdaptee(alias, wIlOP.getObject(), wStoreOP.getObject(), decoderOP.getObject()) : new WhatsappMobileClientAdaptee(alias, wIlOP.getObject(), wStoreOP.getObject(), decoderOP.getObject());
+                    platform == Platform.Whatsapp ? new WhatsappClientAdaptee(alias, wIlOP.getObject(), wStoreOP.getObject(), decoderOP.getObject(), mediaQueue) : new WhatsappMobileClientAdaptee(alias, wIlOP.getObject(), wStoreOP.getObject(), decoderOP.getObject(), mediaQueue);
             default -> throw new IllegalArgumentException("Unsupported platform: " + platform);
         };
         c.addListener(new Listener() {

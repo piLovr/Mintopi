@@ -2,6 +2,7 @@ package com.github.pilovr.mintopi.domain;
 
 import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
 import com.github.pilovr.mintopi.domain.event.MessageEvent;
+import com.github.pilovr.mintopi.domain.event.ReactionMessageEvent;
 import com.github.pilovr.mintopi.domain.event.StubEvent;
 
 import java.util.Scanner;
@@ -22,6 +23,10 @@ public interface Listener {
     default void onExtendedMessage(ExtendedMessageEvent extendedMessageEvent) {
         // Default implementation can be empty or can be overridden by subclasses
         System.out.println("Received extended message: " + extendedMessageEvent.getMessage().getText());
+    }
+
+    default void onReactionMessage(ReactionMessageEvent reactionMessageEvent) {
+        // Default implementation can be empty or can be overridden by subclasses
     }
 
     default void onSpecialMessage(MessageEvent specialMessageEvent) {

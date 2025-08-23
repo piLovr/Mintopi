@@ -1,12 +1,21 @@
 package com.github.pilovr.mintopi.client.listener;
 
+import com.github.pilovr.mintopi.client.Platform;
+import com.github.pilovr.mintopi.client.store.WhatsappStore;
+import com.github.pilovr.mintopi.command.CommandHandler;
+import com.github.pilovr.mintopi.config.MintopiProperties;
 import com.github.pilovr.mintopi.decoder.whatsapp.WhatsappEventDecoder;
 import com.github.pilovr.mintopi.client.Client;
 import com.github.pilovr.mintopi.domain.Listener;
+import com.github.pilovr.mintopi.domain.MessageRunnable;
 import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
 import com.github.pilovr.mintopi.domain.event.MessageEvent;
+import com.github.pilovr.mintopi.domain.event.ReactionMessageEvent;
 import com.github.pilovr.mintopi.domain.event.StubEvent;
 import com.github.pilovr.mintopi.domain.message.ExtendedMessage;
+import com.github.pilovr.mintopi.domain.message.ReactionMessage;
+import com.github.pilovr.mintopi.domain.message.SpecialMessage;
+import com.github.pilovr.mintopi.util.MessageDoorman;
 import it.auties.whatsapp.api.Whatsapp;
 import it.auties.whatsapp.api.WhatsappDisconnectReason;
 import it.auties.whatsapp.api.WhatsappListener;
@@ -16,6 +25,7 @@ import it.auties.whatsapp.model.info.MessageInfo;
 import it.auties.whatsapp.model.info.QuotedMessageInfo;
 import it.auties.whatsapp.model.node.Node;
 import lombok.Setter;
+import org.javatuples.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -30,13 +40,25 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class WhatsappInternalListener implements WhatsappListener, InternalListener {
     private final List<Listener> listeners = new CopyOnWriteArrayList<>();
     private final WhatsappEventDecoder decoder;
+    private final MessageDoorman messageDoorman;
+    private final CommandHandler commandHandler;
+    private final MintopiProperties properties;
+
+    @Setter
+    private MessageRunnable onTimeoutDeserved;
+
+    @Setter
+    private WhatsappStore whatsappStore;
 
     @Setter
     private Client client;
 
     @Autowired
-    public WhatsappInternalListener(WhatsappEventDecoder decoder){
+    public WhatsappInternalListener(WhatsappEventDecoder decoder, MessageDoorman messageDoorman, CommandHandler commandHandler, MintopiProperties properties){
         this.decoder = decoder;
+        this.messageDoorman = messageDoorman;
+        this.commandHandler = commandHandler;
+        this.properties = properties;
     }
 
     public void registerListener(Listener listener) {
@@ -65,18 +87,40 @@ public class WhatsappInternalListener implements WhatsappListener, InternalListe
         if(!(info instanceof ChatMessageInfo)){
             System.out.println("Received non-chat message: " + info);
         }
-        for (Listener listener : listeners) {
-            try {
-                MessageEvent e = (MessageEvent) decoder.decode(client, info);
-                listener.onMessage(e);
-                if(e.getMessage() instanceof ExtendedMessage){
-                    listener.onExtendedMessage(new ExtendedMessageEvent(e));
-                }else{
+        Pair<Boolean, Boolean> shouldDecodeAndFreshTimeout = messageDoorman.shouldDecode(info.senderJid().toString(), info.parentJid().toString());
+        if(shouldDecodeAndFreshTimeout.getValue1()) {
+            if(onTimeoutDeserved != null) onTimeoutDeserved.run(whatsappStore.getOrCreateRoom(info.parentJid().toString(), Platform.Whatsapp, null));
+        }
+        if(!shouldDecodeAndFreshTimeout.getValue0()) return;
+        try {
+            MessageEvent e = (MessageEvent) decoder.decode(client, info);
+
+            if(e.getMessage() instanceof ExtendedMessage){
+                ExtendedMessageEvent em = new ExtendedMessageEvent(e);
+                if(properties.getCommandHandler().isAutoExecuteCommands()){
+                    commandHandler.handle(em);
+                }
+                for (Listener listener : listeners) {
+                    listener.onMessage(e);
+                    listener.onExtendedMessage(em);
+                }
+            }else if (e.getMessage() instanceof ReactionMessage r) {
+                ReactionMessageEvent eRe = new ReactionMessageEvent(e);
+                if(properties.getCommandHandler().isAutoExecuteCommands()){
+                    commandHandler.handle(eRe);
+                }
+                for (Listener listener : listeners) {
+                    listener.onMessage(e);
+                    listener.onReactionMessage(eRe);
+                }
+            }else if (e.getMessage() instanceof SpecialMessage) {
+                for (Listener listener : listeners) {
+                    listener.onMessage(e);
                     listener.onSpecialMessage(e);
                 }
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
             }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
     }
 

@@ -3,10 +3,9 @@ package com.github.pilovr.mintopi.domain.event;
 import com.github.pilovr.mintopi.domain.account.Account;
 import com.github.pilovr.mintopi.client.Client;
 import com.github.pilovr.mintopi.client.Platform;
+import com.github.pilovr.mintopi.domain.message.CommandMessageProperties;
 import com.github.pilovr.mintopi.domain.message.ExtendedMessage;
 import com.github.pilovr.mintopi.domain.message.attachment.Attachment;
-import com.github.pilovr.mintopi.domain.message.attachment.AttachmentType;
-import com.github.pilovr.mintopi.domain.message.builder.ExtendedMessageBuilder;
 import com.github.pilovr.mintopi.domain.room.Room;
 import lombok.Getter;
 
@@ -17,11 +16,19 @@ import java.util.List;
 public class ExtendedMessageEvent extends RoomEvent {
     private final ExtendedMessage message;
     private final Account sender;
+    private CommandMessageProperties commandMessageProperties = null;
 
     public ExtendedMessageEvent(Client client, String id, Account sender, Room room, Platform platform, Long timestamp, ExtendedMessage message) {
         super(client, id, platform, timestamp, room);
         this.message = message;
         this.sender = sender;
+    }
+
+    public ExtendedMessageEvent(Client client, String id, Account sender, Room room, Platform platform, Long timestamp, ExtendedMessage message, CommandMessageProperties commandMessageProperties) {
+        super(client, id, platform, timestamp, room);
+        this.message = message;
+        this.sender = sender;
+        this.commandMessageProperties = commandMessageProperties;
     }
 
     public ExtendedMessageEvent(MessageEvent messageEvent){
@@ -42,5 +49,13 @@ public class ExtendedMessageEvent extends RoomEvent {
             attachment.setDownloadedMedia(res);
         }
         return result;
+    }
+
+    public CommandMessageProperties getCommandMessageProperties(boolean lineSplit) {
+        if(commandMessageProperties != null){
+            return commandMessageProperties;
+        }
+        commandMessageProperties = lineSplit ? CommandMessageProperties.ofLines(this) : CommandMessageProperties.of(this);
+        return commandMessageProperties;
     }
 }

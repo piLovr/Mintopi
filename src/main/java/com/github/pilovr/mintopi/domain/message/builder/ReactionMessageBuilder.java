@@ -4,8 +4,10 @@ import com.github.pilovr.mintopi.domain.message.Message;
 import com.github.pilovr.mintopi.domain.message.MessageType;
 import com.github.pilovr.mintopi.domain.message.ReactionMessage;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor
 public class ReactionMessageBuilder implements MessageBuilder {
     private String id;
     private Object payload;

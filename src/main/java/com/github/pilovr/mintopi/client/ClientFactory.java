@@ -1,12 +1,12 @@
 package com.github.pilovr.mintopi.client;
 
+import com.github.pilovr.mintopi.client.store.Store;
 import com.github.pilovr.mintopi.client.tools.MediaQueue;
-import com.github.pilovr.mintopi.client.whatsapp.WhatsappClientAdaptee;
-import com.github.pilovr.mintopi.client.whatsapp.WhatsappMobileClientAdaptee;
-import com.github.pilovr.mintopi.decoder.whatsapp.WhatsappEventDecoder;
+import com.github.pilovr.mintopi.codec.whatsapp.WhatsappEventDecoder;
 import com.github.pilovr.mintopi.domain.Listener;
 import com.github.pilovr.mintopi.client.listener.WhatsappInternalListener;
-import com.github.pilovr.mintopi.client.store.WhatsappStore;
+import com.github.pilovr.mintopi.domain.account.Account;
+import com.github.pilovr.mintopi.domain.room.Room;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -15,30 +15,30 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
-public class ClientFactory {
-    private final ObjectProvider<WhatsappEventDecoder> decoderOP;
+public class ClientFactory<R extends Room, A extends Account> {
+    private final ObjectProvider<WhatsappEventDecoder<R,A>> decoderOP;
     private final ObjectProvider<WhatsappInternalListener> wIlOP;
-    private final ObjectProvider<WhatsappStore> wStoreOP;
-    private final Set<Client> clients = ConcurrentHashMap.newKeySet();
+    private final Store<R, A> store;
+    private final Set<Client<R,A>> clients = ConcurrentHashMap.newKeySet();
     private final MediaQueue mediaQueue;
 
     @Autowired
     public ClientFactory(
-            ObjectProvider<WhatsappEventDecoder> decoder,
+            ObjectProvider<WhatsappEventDecoder<R,A>> decoder,
             ObjectProvider<WhatsappInternalListener> wIlOP,
-            ObjectProvider<WhatsappStore> wStoreOP,
+            Store<R, A> store,
             MediaQueue mediaQueue
     ) {
         this.decoderOP = decoder;
         this.wIlOP = wIlOP;
-        this.wStoreOP = wStoreOP;
+        this.store = store;
         this.mediaQueue = mediaQueue;
     }
 
-    public Client createClient(Platform platform, String alias){
-        Client c =  switch(platform){
+    public Client<R,A> createClient(Platform platform, String alias){
+        Client<R,A> c =  switch(platform){
             case Whatsapp, WhatsappMobile ->
-                    platform == Platform.Whatsapp ? new WhatsappClientAdaptee(alias, wIlOP.getObject(), wStoreOP.getObject(), decoderOP.getObject(), mediaQueue) : new WhatsappMobileClientAdaptee(alias, wIlOP.getObject(), wStoreOP.getObject(), decoderOP.getObject(), mediaQueue);
+                    platform == Platform.Whatsapp ? new WhatsappClientAdaptee<>(alias, wIlOP.getObject(), store, decoderOP.getObject(), mediaQueue) : new WhatsappMobileClientAdaptee<>(alias, wIlOP.getObject(),store, decoderOP.getObject(), mediaQueue);
             default -> throw new IllegalArgumentException("Unsupported platform: " + platform);
         };
         c.addListener(new Listener() {

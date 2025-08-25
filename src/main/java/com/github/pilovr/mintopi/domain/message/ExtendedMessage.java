@@ -9,7 +9,7 @@ import lombok.Getter;
 import java.util.List;
 
 @Getter
-public non-sealed class ExtendedMessage extends Message {
+public final class ExtendedMessage extends Message {
     private final String text;
     private final List<Account> mentions;
     private final Account quotedMessageSender;

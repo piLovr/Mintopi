@@ -1,19 +1,21 @@
-package com.github.pilovr.mintopi.client.whatsapp;
+package com.github.pilovr.mintopi.client;
 
+import com.github.pilovr.mintopi.client.store.Store;
 import com.github.pilovr.mintopi.client.tools.MediaQueue;
-import com.github.pilovr.mintopi.decoder.whatsapp.WhatsappEventDecoder;
+import com.github.pilovr.mintopi.codec.whatsapp.WhatsappEventDecoder;
 import com.github.pilovr.mintopi.client.listener.WhatsappInternalListener;
-import com.github.pilovr.mintopi.client.store.WhatsappStore;
+import com.github.pilovr.mintopi.domain.account.Account;
+import com.github.pilovr.mintopi.domain.room.Room;
 import it.auties.whatsapp.api.Whatsapp;
 import it.auties.whatsapp.api.WhatsappVerificationHandler;
 import it.auties.whatsapp.model.companion.CompanionDevice;
 
 import java.util.Scanner;
 
-public class WhatsappMobileClientAdaptee extends WhatsappClientAdaptee {
+public final class WhatsappMobileClientAdaptee<R extends Room, A extends Account> extends WhatsappClientAdaptee<R, A> {
     private long phoneNumber;
-    public WhatsappMobileClientAdaptee(String alias, WhatsappInternalListener listener, WhatsappStore object, WhatsappEventDecoder decoder, MediaQueue mediaQueue) {
-        super(alias, listener, wStoreOP.getObject(), decoder, mediaQueue);
+    public WhatsappMobileClientAdaptee(String alias, WhatsappInternalListener listener, Store<R,A> store, WhatsappEventDecoder<R,A> decoder, MediaQueue mediaQueue) {
+        super(alias, listener, store, decoder, mediaQueue);
     }
 
     @Override

@@ -21,7 +21,8 @@ public class Account {
         }
     }
     public String removeNonAsciiCharacters(String input) {
-        return input.replaceAll("[^\\x00-\\x7F]", "");
+        //Ony keep A-Z, a-z, 0-9 and basic punctuation
+        return input.replaceAll("[^\\x20-\\x7E]", "");
     }
 
     public void setPushName(@NonNull String pushName) {

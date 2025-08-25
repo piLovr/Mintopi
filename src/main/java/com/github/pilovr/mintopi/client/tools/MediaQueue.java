@@ -4,7 +4,11 @@ import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
 import com.github.pilovr.mintopi.domain.message.attachment.AttachmentType;
 import com.github.pilovr.mintopi.util.MediaConverter;
 import org.javatuples.Pair;
+import org.javatuples.Quartet;
+import org.javatuples.Triplet;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -15,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Service
 public class MediaQueue {
     private final Set<Pair<AttachmentType, AttachmentType>> supportedConversions;
-    private final Queue<com.github.pilovr.mintopi.client.tools.MediaQueueObjectWithFuture> queue;
+    private final Queue<Quartet<AttachmentType, AttachmentType, byte[], FluxSink<MediaConversionEvent>>> queue;
     private final AtomicBoolean isProcessing;
     private Thread processingThread;
 
@@ -32,26 +36,27 @@ public class MediaQueue {
         return supportedConversions.contains(Pair.with(from, to));
     }
 
-    public CompletableFuture<byte[]> addToQueue(ExtendedMessageEvent origin, AttachmentType target, int attachmentIndex, int timeout) {
-        CompletableFuture<byte[]> resultFuture = new CompletableFuture<>();
-        MediaQueueObjectWithFuture mediaQueueObject = new MediaQueueObjectWithFuture(target, origin, attachmentIndex, timeout, resultFuture);
-
-
-        if (!isSupportedConversion(mediaQueueObject.originType(), mediaQueueObject.targetType())) {
-            CompletableFuture<byte[]> future = new CompletableFuture<>();
-            future.completeExceptionally(new IllegalArgumentException(
-                    "Unsupported conversion: " + mediaQueueObject.originType() + " to " + mediaQueueObject.targetType()));
-            return future;
+    public Flux<MediaConversionEvent> addToQueue(ExtendedMessageEvent<?,?> origin, AttachmentType targetType, int attachmentIndex) {
+        AttachmentType originType = origin.getMessage().getAttachments().get(attachmentIndex).getType();
+        if (!isSupportedConversion(originType, targetType)) {
+            return Flux.create(emitter -> {
+                emitter.next(new MediaConversionEvent(MediaConversionEvent.EventType.CONVERSION_FAILED,getQueueSize(),null));
+                emitter.complete();
+            });
         }
 
+        byte[] originData = origin.downloadAttachments().get(attachmentIndex);
+        Flux<MediaConversionEvent> flux = Flux.create(emitter -> {
+            queue.add(Quartet.with(originType, targetType, originData, emitter));
+            emitter.next(new MediaConversionEvent(MediaConversionEvent.EventType.CONVERSION_STARTED,getQueueSize(),null));
+        });
+
         synchronized (queue) {
-            queue.add(mediaQueueObject);
             if (!isProcessing.get()) {
                 startProcessing();
             }
         }
-
-        return resultFuture;
+        return flux;
     }
 
     public synchronized void startProcessing() {
@@ -64,12 +69,13 @@ public class MediaQueue {
 
     private void processQueue() {
         while (isProcessing.get() && !Thread.currentThread().isInterrupted()) {
-            MediaQueueObjectWithFuture mediaQueueObject;
+            Quartet<AttachmentType, AttachmentType, byte[], FluxSink<MediaConversionEvent>> element;
             synchronized (queue) {
-                mediaQueueObject = (MediaQueueObjectWithFuture) queue.poll();
+                element = queue.poll();
+                updatePositions();
             }
 
-            if (mediaQueueObject == null) {
+            if (element == null) {
                 try {
                     Thread.sleep(100);
                     continue;
@@ -81,28 +87,18 @@ public class MediaQueue {
 
             try {
                 // Process this media object and complete the future
-                byte[] convertedMedia = processMediaConversion(mediaQueueObject);
-                mediaQueueObject.future().complete(convertedMedia);
-
-                // Respect additionalTimeout before processing the next item
-                if (mediaQueueObject.additionalTimeout() > 0) {
-                    Thread.sleep(mediaQueueObject.additionalTimeout());
-                }
-            } catch (InterruptedException e) {
-                mediaQueueObject.future().completeExceptionally(e);
-                Thread.currentThread().interrupt();
-                break;
+                element.getValue3().next(new MediaConversionEvent(MediaConversionEvent.EventType.CONVERSION_STARTED,0,null));
+                byte[] convertedMedia = processMediaConversion(element);
+                element.getValue3().next(new MediaConversionEvent(MediaConversionEvent.EventType.CONVERSION_SUCCEEDED, 0, convertedMedia));
             } catch (Exception e) {
-                mediaQueueObject.future().completeExceptionally(e);
-                System.err.println("Error processing media conversion: " + e.getMessage());
+                element.getValue3().next(new MediaConversionEvent(MediaConversionEvent.EventType.CONVERSION_FAILED, 0, null));
             }
         }
         isProcessing.set(false);
     }
 
-    private byte[] processMediaConversion(com.github.pilovr.mintopi.client.tools.MediaQueueObjectWithFuture mediaQueueObject) {
-        byte[] origin = mediaQueueObject.messageEvent().downloadAttachments().get(mediaQueueObject.attachmentIndex());
-        return MediaConverter.convert(origin, mediaQueueObject.originType(), mediaQueueObject.targetType());
+    private byte[] processMediaConversion(Quartet<AttachmentType, AttachmentType, byte[], FluxSink<MediaConversionEvent>> element) {
+        return MediaConverter.convert(element.getValue2(), element.getValue0(), element.getValue1());
     }
 
     public void stopProcessing() {
@@ -119,6 +115,14 @@ public class MediaQueue {
     public int getQueueSize() {
         synchronized (queue) {
             return queue.size();
+        }
+    }
+
+    private void updatePositions(){
+        int pos = getQueueSize();
+        for(Quartet<AttachmentType, AttachmentType, byte[], FluxSink<MediaConversionEvent>> item : queue){
+            item.getValue3().next(new MediaConversionEvent(MediaConversionEvent.EventType.POS_UPDATED, pos, null));
+            pos--;
         }
     }
 }

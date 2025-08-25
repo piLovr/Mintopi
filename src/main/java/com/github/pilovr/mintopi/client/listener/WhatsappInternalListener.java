@@ -1,13 +1,10 @@
 package com.github.pilovr.mintopi.client.listener;
 
-import com.github.pilovr.mintopi.client.Platform;
-import com.github.pilovr.mintopi.client.store.WhatsappStore;
 import com.github.pilovr.mintopi.command.CommandHandler;
 import com.github.pilovr.mintopi.config.MintopiProperties;
-import com.github.pilovr.mintopi.decoder.whatsapp.WhatsappEventDecoder;
+import com.github.pilovr.mintopi.codec.whatsapp.WhatsappEventDecoder;
 import com.github.pilovr.mintopi.client.Client;
 import com.github.pilovr.mintopi.domain.Listener;
-import com.github.pilovr.mintopi.domain.MessageRunnable;
 import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
 import com.github.pilovr.mintopi.domain.event.MessageEvent;
 import com.github.pilovr.mintopi.domain.event.ReactionMessageEvent;
@@ -43,9 +40,6 @@ public class WhatsappInternalListener implements WhatsappListener, InternalListe
     private final CommandRateLimiter messageDoorman;
     private final CommandHandler commandHandler;
     private final MintopiProperties properties;
-
-    @Setter
-    private WhatsappStore whatsappStore;
 
     @Setter
     private Client client;
@@ -86,7 +80,7 @@ public class WhatsappInternalListener implements WhatsappListener, InternalListe
         }
         Pair<Boolean, Boolean> shouldDecodeAndFreshTimeout = messageDoorman.shouldDecode(info.senderJid().toString(), info.parentJid().toString());
         if(shouldDecodeAndFreshTimeout.getValue1()) {
-            client.sendMessage(whatsappStore.getOrCreateRoom(info.parentJid().toString(), Platform.Whatsapp, null), properties.getCommandHandler().getErrorMessages().getRateLimited());
+            //todo client.sendMessage(whatsappStore.getOrCreateRoom(info.parentJid().toString(), Platform.Whatsapp, null), properties.getCommandHandler().getErrorMessages().getRateLimited());
         }
         if(!shouldDecodeAndFreshTimeout.getValue0()) return;
         try {

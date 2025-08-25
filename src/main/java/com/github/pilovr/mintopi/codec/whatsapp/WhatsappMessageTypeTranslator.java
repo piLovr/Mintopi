@@ -1,4 +1,4 @@
-package com.github.pilovr.mintopi.decoder.whatsapp;
+package com.github.pilovr.mintopi.codec.whatsapp;
 
 import com.github.pilovr.mintopi.domain.message.MessageType;
 import com.github.pilovr.mintopi.domain.message.attachment.AttachmentType;

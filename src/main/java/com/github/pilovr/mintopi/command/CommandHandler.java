@@ -5,7 +5,6 @@ import com.github.pilovr.mintopi.config.MintopiProperties;
 import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
 import com.github.pilovr.mintopi.domain.event.ReactionMessageEvent;
 import com.github.pilovr.mintopi.domain.message.CommandMessageProperties;
-import com.github.pilovr.mintopi.domain.message.Message;
 import com.github.pilovr.mintopi.domain.message.builder.MessageBuilder;
 import com.github.pilovr.mintopi.domain.room.Room;
 import com.github.pilovr.mintopi.util.LevenshteinUtil;
@@ -19,27 +18,28 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 /**
- * Discovers, registers, and processes all {@link Command} beans in the application context.
+ * Discovers, registers, and processes all {@link CommandBlueprint} beans in the application context.
  */
 @Service
-public class CommandHandler {
+public class CommandHandler { //todo fixxen/überarbeiten
 
     private static final Logger log = LoggerFactory.getLogger(CommandHandler.class);
 
 
-    private final Map<String, Command> rootCommands = new HashMap<>();
-    private final List<Command> allCommands;
+    private final Map<String, CommandBlueprint> rootCommands = new HashMap<>();
+    private final List<CommandBlueprint> allCommands;
 
-    private final Map<String, Command> emojiCommands = new HashMap<>();
+    private final Map<String, CommandBlueprint> emojiCommands = new HashMap<>();
     private final MintopiProperties.CommandHandler properties;
     private final MintopiProperties.CommandHandler.ErrorMessages errorMessages;
 
     @Autowired
-    public CommandHandler(List<Command> allCommands, MintopiProperties properties) {
+    public CommandHandler(List<CommandBlueprint> allCommands, MintopiProperties properties) {
         this.allCommands = allCommands;
         this.properties = properties.getCommandHandler();
         this.errorMessages = this.properties.getErrorMessages();
     }
+
 
     /**
      * Initializes the command handler by registering all command beans.
@@ -47,11 +47,11 @@ public class CommandHandler {
      */
     @PostConstruct
     public void registerCommands() {
-        Map<String, Command> commandMap = new HashMap<>();
+        Map<String, CommandBlueprint> commandMap = new HashMap<>();
         // First pass: register all commands by their primary name for lookup.
-        for (Command command : allCommands) {
+        for (CommandBlueprint command : allCommands) {
             if (command.getName() == null || command.getName().isBlank()) {
-                log.warn("Command bean of class {} has a null or empty name, skipping.", command.getClass().getName());
+                log.warn("Command bean of class {} has a null or empty name, skipping.", command.getClass().getName()); //todo this for name??
                 continue;
             }
             if (commandMap.containsKey(command.getName())) {
@@ -62,7 +62,7 @@ public class CommandHandler {
         }
 
         // Second pass: build the tree structure.
-        for (Command command : allCommands) {
+        for (CommandBlueprint command : allCommands) {
             if (command.getName() == null || command.getName().isBlank()) {
                 continue; // Skip already warned-about commands
             }
@@ -74,7 +74,7 @@ public class CommandHandler {
                 emojiCommands.put(emoji, command);
             }
             if (command.getParentName() != null) {
-                Command parent = commandMap.get(command.getParentName());
+                CommandBlueprint parent = commandMap.get(command.getParentName());
                 if (parent != null) {
                     parent.addSubCommand(command);
                     log.info("Registered subcommand '{}' for command '{}'", command.getName(), parent.getName());
@@ -89,7 +89,7 @@ public class CommandHandler {
         }
     }
 
-    private void registerRootCommand(Command command) {
+    private void registerRootCommand(CommandBlueprint command) {
         if (rootCommands.containsKey(command.getName())) {
             throw new IllegalStateException("Duplicate root command or alias detected: " + command.getName());
         }
@@ -137,7 +137,7 @@ public class CommandHandler {
         Room room = extendedMessageEvent.getRoom();
 
         String rootCommandName = commandProperties.getCommand();
-        Command currentCommand = rootCommands.get(rootCommandName);
+        CommandBlueprint currentCommand = rootCommands.get(rootCommandName);
         int levenshteinThreshold = properties.getLevenshteinThreshold();
         int levenshteinSuggestionThreshold = properties.getLevenshteinSuggestionThreshold() + levenshteinThreshold;
 
@@ -166,8 +166,8 @@ public class CommandHandler {
         while (commandProperties.getArgs().iterator().hasNext()) {
             String subCommandName = commandProperties.getArgs().iterator().next();
             assert currentCommand != null;
-            Map<String, Command> subCommands = currentCommand.getSubCommands();
-            Command subCommand = subCommands.get(subCommandName);
+            Map<String, CommandBlueprint> subCommands = currentCommand.getSubCommands();
+            CommandBlueprint subCommand = subCommands.get(subCommandName);
 
             if (subCommand != null) {
                 currentCommand = subCommand;
@@ -214,7 +214,7 @@ public class CommandHandler {
 
     public void handle(ReactionMessageEvent reactionMessageEvent) {
         String emoji = reactionMessageEvent.getReactionMessage().getReaction();
-        Command command = emojiCommands.get(emoji);
+        CommandBlueprint command = emojiCommands.get(emoji);
         if (command != null) {
             Client client = reactionMessageEvent.getClient();
             client.getStore().getMessageDoorman().register(reactionMessageEvent.getSender().getId(), reactionMessageEvent.getRoom().getId()); //register user in doorman

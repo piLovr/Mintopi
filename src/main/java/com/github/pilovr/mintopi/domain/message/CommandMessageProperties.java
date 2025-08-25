@@ -4,6 +4,7 @@ import com.github.pilovr.mintopi.client.Platform;
 import com.github.pilovr.mintopi.domain.account.Account;
 import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
 import com.github.pilovr.mintopi.domain.message.builder.ExtendedMessageBuilder;
+import com.github.pilovr.mintopi.domain.room.Room;
 import lombok.AccessLevel;
 import lombok.Getter;
 
@@ -13,8 +14,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Getter
-public class CommandMessageProperties {
-    private ExtendedMessageEvent originalMessageEvent;
+public class CommandMessageProperties<R extends Room, A extends Account> {
+    private ExtendedMessageEvent<R,A> originalMessageEvent;
     private final String originalText;
 
     private final String command;
@@ -22,7 +23,7 @@ public class CommandMessageProperties {
     private final Set<Character> flags;
     private final Set<String> argsLowerCase;
 
-    private final Set<CommandMessageProperties> childs = new HashSet<>();
+    private final Set<CommandMessageProperties<R,A>> childs = new HashSet<>();
     private final String prefix; //All special characters at the start of the first word
     private final Set<Account> who;
 
@@ -31,7 +32,7 @@ public class CommandMessageProperties {
     private final List<Account> mentionsOfLine;
 
     public static CommandMessageProperties of(ExtendedMessageEvent event) {
-        CommandMessageProperties c = of(event.getMessage(), event.getPlatform());
+        CommandMessageProperties c = of((ExtendedMessage) event.getMessage(), event.getPlatform());
         c.originalMessageEvent = event;
         return c;
     }
@@ -55,7 +56,7 @@ public class CommandMessageProperties {
         return res;
     }
     public static CommandMessageProperties ofLines(ExtendedMessageEvent event) {
-        CommandMessageProperties c = ofLines(event.getMessage(), event.getPlatform());
+        CommandMessageProperties c = ofLines((ExtendedMessage) event.getMessage(), event.getPlatform());
         c.originalMessageEvent = event;
         return c;
     }
@@ -110,7 +111,7 @@ public class CommandMessageProperties {
     }
 
     public static ExtendedMessageEvent refactorToMessageEvent(ExtendedMessageEvent originalEvent, CommandMessageProperties props){
-        ExtendedMessageBuilder emb = new ExtendedMessageBuilder(originalEvent.getMessage())
+        ExtendedMessageBuilder emb = new ExtendedMessageBuilder((ExtendedMessage) originalEvent.getMessage())
                 .text(props.originalText)
                 .mentions(props.mentionsOfLine);
         return new ExtendedMessageEvent(originalEvent.getClient(), originalEvent.getId(), originalEvent.getSender(), originalEvent.getRoom(), originalEvent.getPlatform(), originalEvent.getTimestamp(), emb.build());

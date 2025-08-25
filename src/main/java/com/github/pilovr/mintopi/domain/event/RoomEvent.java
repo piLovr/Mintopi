@@ -6,10 +6,10 @@ import com.github.pilovr.mintopi.domain.room.Room;
 import lombok.Getter;
 
 @Getter
-public abstract class RoomEvent extends Event {
-    private final Room room;
+public abstract class RoomEvent<R extends Room> extends Event {
+    private final R room;
 
-    public RoomEvent(Client client, String id, Platform platform, Long timestamp, Room room) {
+    public RoomEvent(Client client, String id, Platform platform, Long timestamp, R room) {
         super(client, id, platform, timestamp);
         this.room = room;
     }

@@ -1,5 +1,6 @@
-package com.github.pilovr.mintopi.decoder.whatsapp;
+package com.github.pilovr.mintopi.codec.whatsapp;
 
+import com.github.pilovr.mintopi.client.store.Store;
 import com.github.pilovr.mintopi.domain.account.Account;
 import com.github.pilovr.mintopi.client.Client;
 import com.github.pilovr.mintopi.client.Platform;
@@ -14,9 +15,8 @@ import com.github.pilovr.mintopi.domain.message.attachment.AttachmentBuilder;
 import com.github.pilovr.mintopi.domain.message.attachment.AttachmentType;
 import com.github.pilovr.mintopi.domain.message.builder.ReactionMessageBuilder;
 import com.github.pilovr.mintopi.domain.room.Room;
-import com.github.pilovr.mintopi.client.store.WhatsappStore;
 import it.auties.whatsapp.model.info.*;
-import com.github.pilovr.mintopi.decoder.MultiEventDecoder;
+import com.github.pilovr.mintopi.codec.MultiCodec;
 import it.auties.whatsapp.model.jid.Jid;
 import it.auties.whatsapp.model.media.MutableAttachmentProvider;
 import it.auties.whatsapp.model.message.model.MediaMessage;
@@ -25,26 +25,27 @@ import it.auties.whatsapp.model.message.model.MessageContainer;
 import it.auties.whatsapp.model.message.standard.*;
 import it.auties.whatsapp.model.node.Node;
 import lombok.Setter;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 @Service
-@Scope("prototype")
-public class WhatsappEventDecoder extends MultiEventDecoder {
+public class WhatsappEventDecoder<R extends Room, A extends Account> extends MultiCodec {
     @Setter
-    private WhatsappStore whatsappStore;
+    private Store<R, A> store;
 
     @Autowired
-    public WhatsappEventDecoder() {
+    public WhatsappEventDecoder(Store<R,A> store) {
         this.register(ChatMessageInfo.class, this::decodeChatMessageInfo);
         this.register(MessageInfo.class, this::decodeMessageInfo);
         this.register(Node.class, this::decodeStubNode);
+
+        this.store = store;
     }
 
-    private MessageEvent decodeMessageInfo(Client client, MessageInfo messageInfo){
+    private MessageEvent<?, R, A> decodeMessageInfo(Client client, MessageInfo messageInfo){
         if(messageInfo instanceof ChatMessageInfo chatMessageInfo){
             return decodeChatMessageInfo(client, chatMessageInfo);
         }else if(messageInfo instanceof NewsletterMessageInfo newsletterMessageInfo){
@@ -57,16 +58,16 @@ public class WhatsappEventDecoder extends MultiEventDecoder {
         return null;
     }
 
-    private MessageEvent decodeChatMessageInfo(Client client, ChatMessageInfo chatMessageInfo){
+    private MessageEvent<?, R, A> decodeChatMessageInfo(Client client, ChatMessageInfo chatMessageInfo){
         String id = chatMessageInfo.id();
         Jid sender = chatMessageInfo.senderJid();
         Jid parent = chatMessageInfo.parentJid();
 
-        Account account = whatsappStore.getOrCreateAccount(
+        A account = store.getOrCreateAccount(
                 sender.toString(),
                 Platform.Whatsapp,
                 chatMessageInfo.pushName().orElse(null));
-        Room room = whatsappStore.getOrCreateRoom(
+        R room = store.getOrCreateRoom(
                 parent.toString(),
                 Platform.Whatsapp,
                 chatMessageInfo.chatName()
@@ -84,7 +85,7 @@ public class WhatsappEventDecoder extends MultiEventDecoder {
                     if(chatMessageInfo.quotedMessage().isPresent()){
                         QuotedMessageInfo q = chatMessageInfo.quotedMessage().get();
                         extendedMessageBuilder.quoted(decodeMessageContainer(q.id(), q, q.message())
-                                .quotedMessageSender(whatsappStore.getOrCreateAccount(q.senderJid().toString(), Platform.Whatsapp, null))
+                                .quotedMessageSender(store.getOrCreateAccount(q.senderJid().toString(), Platform.Whatsapp, null))
                                 .build());
                     }
                 }
@@ -96,7 +97,7 @@ public class WhatsappEventDecoder extends MultiEventDecoder {
 
 
         if(builder == null) return null;
-        return new MessageEvent( //members, name, pushname, client, ANIMATED
+        return new MessageEvent<>( //members, name, pushname, client, ANIMATED
                 client,
                 id,
                 Platform.Whatsapp,
@@ -124,7 +125,7 @@ public class WhatsappEventDecoder extends MultiEventDecoder {
             List<Jid> mentions = context.mentions();
             List<Account> mentionsResult = new ArrayList<>();
             for(Jid jid  : mentions){
-                Account account = whatsappStore.getOrCreateAccount(jid.toString(), Platform.Whatsapp, null);
+                Account account = store.getOrCreateAccount(jid.toString(), Platform.Whatsapp, null);
                 mentionsResult.add(account);
             }
             builder.mentions(mentionsResult);
@@ -134,11 +135,10 @@ public class WhatsappEventDecoder extends MultiEventDecoder {
 
     private MediaMessage getMediaMessage(Message base, AttachmentType aType) {
         return switch (aType) {
-            case VIDEO -> (VideoOrGifMessage) base;
+            case VIDEO, GIF -> (VideoOrGifMessage) base;
             case IMAGE -> (ImageMessage) base;
             case DOCUMENT -> (DocumentMessage) base;
             case AUDIO -> (AudioMessage) base;
-            case GIF -> (VideoOrGifMessage) base;
             case STICKER -> (StickerMessage) base;
             default -> null;
         };
@@ -228,7 +228,7 @@ public class WhatsappEventDecoder extends MultiEventDecoder {
 
         var fromJid = node.attributes()
                 .getRequiredJid("from");
-        var room = whatsappStore.getOrCreateRoom(fromJid.toString(), Platform.Whatsapp, null);
+        var room = store.getOrCreateRoom(fromJid.toString(), Platform.Whatsapp, null);
         return new StubEvent(
                 client,
                 null,

@@ -32,7 +32,7 @@ public class CommandRateLimiter {
         this.spamProperties = mintopiProperties.getSpamHandler();
     }
 
-    public Pair<Boolean, Boolean> isForbidden(String senderId, String roomId){
+    public Pair<Boolean, Boolean> isForbidden(String senderId, String roomId){ //todo platformId e.g. w123238136728@s.whatsapp.net
         Pair<Boolean, Boolean> timeoutCheck = isTimeout(senderId);
         return Pair.with(!isWhiteListed(senderId) || isBlackListed(senderId) || timeoutCheck.getValue0() || isSpam(senderId, roomId), timeoutCheck.getValue1());
     }

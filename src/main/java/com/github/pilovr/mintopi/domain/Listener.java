@@ -1,13 +1,15 @@
 package com.github.pilovr.mintopi.domain;
 
+import com.github.pilovr.mintopi.domain.account.Account;
 import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
 import com.github.pilovr.mintopi.domain.event.MessageEvent;
 import com.github.pilovr.mintopi.domain.event.ReactionMessageEvent;
 import com.github.pilovr.mintopi.domain.event.StubEvent;
+import com.github.pilovr.mintopi.domain.room.Room;
 
 import java.util.Scanner;
 
-public interface Listener {
+public interface Listener<R extends Room, A extends Account> {
     default String onInputRequired(String message) {
         System.out.println("Input required: " + message);
         Scanner scanner = new Scanner(System.in);
@@ -16,20 +18,20 @@ public interface Listener {
         return input;
     }
 
-    default void onMessage(MessageEvent messageEvent) {
+    default void onMessage(MessageEvent<?, R, A> messageEvent) {
 
     }
 
-    default void onExtendedMessage(ExtendedMessageEvent extendedMessageEvent) {
+    default void onExtendedMessage(ExtendedMessageEvent<R, A> extendedMessageEvent) {
         // Default implementation can be empty or can be overridden by subclasses
         System.out.println("Received extended message: " + extendedMessageEvent.getMessage().getText());
     }
 
-    default void onReactionMessage(ReactionMessageEvent reactionMessageEvent) {
+    default void onReactionMessage(ReactionMessageEvent<R,A> reactionMessageEvent) {
         // Default implementation can be empty or can be overridden by subclasses
     }
 
-    default void onSpecialMessage(MessageEvent specialMessageEvent) {
+    default void onSpecialMessage(MessageEvent<?, R, A> specialMessageEvent) {
         // Default implementation can be empty or can be overridden by subclasses
     }
 

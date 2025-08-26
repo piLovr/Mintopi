@@ -1,17 +1,11 @@
 package com.github.pilovr.mintopi.client.listener;
 
-import com.github.pilovr.mintopi.command.CommandHandler;
+import com.github.pilovr.mintopi.subscriber.command.CommandHandler;
 import com.github.pilovr.mintopi.config.MintopiProperties;
 import com.github.pilovr.mintopi.codec.whatsapp.WhatsappEventDecoder;
 import com.github.pilovr.mintopi.client.Client;
 import com.github.pilovr.mintopi.domain.Listener;
-import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
-import com.github.pilovr.mintopi.domain.event.MessageEvent;
-import com.github.pilovr.mintopi.domain.event.ReactionMessageEvent;
-import com.github.pilovr.mintopi.domain.event.StubEvent;
-import com.github.pilovr.mintopi.domain.message.ExtendedMessage;
-import com.github.pilovr.mintopi.domain.message.ReactionMessage;
-import com.github.pilovr.mintopi.domain.message.SpecialMessage;
+import com.github.pilovr.mintopi.domain.payload.message.ReactionMessagePayload;
 import com.github.pilovr.mintopi.client.tools.CommandRateLimiter;
 import it.auties.whatsapp.api.Whatsapp;
 import it.auties.whatsapp.api.WhatsappDisconnectReason;
@@ -95,7 +89,7 @@ public class WhatsappInternalListener implements WhatsappListener, InternalListe
                     listener.onMessage(e);
                     listener.onExtendedMessage(em);
                 }
-            }else if (e.getMessage() instanceof ReactionMessage r) {
+            }else if (e.getMessage() instanceof ReactionMessagePayload r) {
                 ReactionMessageEvent eRe = new ReactionMessageEvent(e);
                 if(properties.getCommandHandler().isAutoExecuteCommands()){
                     commandHandler.handle(eRe);

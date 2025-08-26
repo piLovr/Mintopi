@@ -1,10 +1,6 @@
 package com.github.pilovr.mintopi.domain;
 
 import com.github.pilovr.mintopi.domain.account.Account;
-import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
-import com.github.pilovr.mintopi.domain.event.MessageEvent;
-import com.github.pilovr.mintopi.domain.event.ReactionMessageEvent;
-import com.github.pilovr.mintopi.domain.event.StubEvent;
 import com.github.pilovr.mintopi.domain.room.Room;
 
 import java.util.Scanner;

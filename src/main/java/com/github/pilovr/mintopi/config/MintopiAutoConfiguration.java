@@ -1,7 +1,6 @@
 package com.github.pilovr.mintopi.config;
 
-import com.github.pilovr.mintopi.command.CommandBlueprint;
-import com.github.pilovr.mintopi.command.CommandHandler;
+import com.github.pilovr.mintopi.subscriber.command.CommandHandler;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -4,16 +4,7 @@ import com.github.pilovr.mintopi.client.store.Store;
 import com.github.pilovr.mintopi.domain.account.Account;
 import com.github.pilovr.mintopi.client.Client;
 import com.github.pilovr.mintopi.client.Platform;
-import com.github.pilovr.mintopi.domain.event.MessageEvent;
-import com.github.pilovr.mintopi.domain.event.StubEvent;
 import com.github.pilovr.mintopi.domain.event.StubType;
-import com.github.pilovr.mintopi.domain.message.builder.ExtendedMessageBuilder;
-import com.github.pilovr.mintopi.domain.message.builder.MessageBuilder;
-import com.github.pilovr.mintopi.domain.message.MessageType;
-import com.github.pilovr.mintopi.domain.message.attachment.Attachment;
-import com.github.pilovr.mintopi.domain.message.attachment.AttachmentBuilder;
-import com.github.pilovr.mintopi.domain.message.attachment.AttachmentType;
-import com.github.pilovr.mintopi.domain.message.builder.ReactionMessageBuilder;
 import com.github.pilovr.mintopi.domain.room.Room;
 import it.auties.whatsapp.model.info.*;
 import com.github.pilovr.mintopi.codec.MultiCodec;
@@ -65,11 +56,11 @@ public class WhatsappEventDecoder<R extends Room, A extends Account> extends Mul
 
         A account = store.getOrCreateAccount(
                 sender.toString(),
-                Platform.Whatsapp,
+                Platform.WHATSAPP,
                 chatMessageInfo.pushName().orElse(null));
         R room = store.getOrCreateRoom(
                 parent.toString(),
-                Platform.Whatsapp,
+                Platform.WHATSAPP,
                 chatMessageInfo.chatName()
         );
 
@@ -85,7 +76,7 @@ public class WhatsappEventDecoder<R extends Room, A extends Account> extends Mul
                     if(chatMessageInfo.quotedMessage().isPresent()){
                         QuotedMessageInfo q = chatMessageInfo.quotedMessage().get();
                         extendedMessageBuilder.quoted(decodeMessageContainer(q.id(), q, q.message())
-                                .quotedMessageSender(store.getOrCreateAccount(q.senderJid().toString(), Platform.Whatsapp, null))
+                                .quotedMessageSender(store.getOrCreateAccount(q.senderJid().toString(), Platform.WHATSAPP, null))
                                 .build());
                     }
                 }
@@ -100,7 +91,7 @@ public class WhatsappEventDecoder<R extends Room, A extends Account> extends Mul
         return new MessageEvent<>( //members, name, pushname, client, ANIMATED
                 client,
                 id,
-                Platform.Whatsapp,
+                Platform.WHATSAPP,
                 chatMessageInfo.timestampSeconds().isPresent() ? chatMessageInfo.timestampSeconds().getAsLong() : null,
                 account,
                 room,
@@ -125,7 +116,7 @@ public class WhatsappEventDecoder<R extends Room, A extends Account> extends Mul
             List<Jid> mentions = context.mentions();
             List<Account> mentionsResult = new ArrayList<>();
             for(Jid jid  : mentions){
-                Account account = store.getOrCreateAccount(jid.toString(), Platform.Whatsapp, null);
+                Account account = store.getOrCreateAccount(jid.toString(), Platform.WHATSAPP, null);
                 mentionsResult.add(account);
             }
             builder.mentions(mentionsResult);
@@ -228,11 +219,11 @@ public class WhatsappEventDecoder<R extends Room, A extends Account> extends Mul
 
         var fromJid = node.attributes()
                 .getRequiredJid("from");
-        var room = store.getOrCreateRoom(fromJid.toString(), Platform.Whatsapp, null);
+        var room = store.getOrCreateRoom(fromJid.toString(), Platform.WHATSAPP, null);
         return new StubEvent(
                 client,
                 null,
-                Platform.Whatsapp,
+                Platform.WHATSAPP,
                 timestamp,
                 null,
                 stubType

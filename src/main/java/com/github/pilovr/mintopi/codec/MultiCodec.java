@@ -6,7 +6,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.github.pilovr.mintopi.client.Client;
-import com.github.pilovr.mintopi.domain.event.Event;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class MultiCodec {

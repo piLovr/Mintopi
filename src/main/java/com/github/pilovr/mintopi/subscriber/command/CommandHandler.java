@@ -1,11 +1,8 @@
-package com.github.pilovr.mintopi.command;
+package com.github.pilovr.mintopi.subscriber.command;
 
 import com.github.pilovr.mintopi.client.Client;
 import com.github.pilovr.mintopi.config.MintopiProperties;
-import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
-import com.github.pilovr.mintopi.domain.event.ReactionMessageEvent;
-import com.github.pilovr.mintopi.domain.message.CommandMessageProperties;
-import com.github.pilovr.mintopi.domain.message.builder.MessageBuilder;
+import com.github.pilovr.mintopi.domain.payload.message.CommandProperties;
 import com.github.pilovr.mintopi.domain.room.Room;
 import com.github.pilovr.mintopi.util.LevenshteinUtil;
 import jakarta.annotation.PostConstruct;
@@ -116,7 +113,7 @@ public class CommandHandler { //todo fixxen/überarbeiten
             return;
         }
 
-        CommandMessageProperties commandProperties;
+        CommandProperties commandProperties;
 
         if (extendedMessageEvent.getCommandMessageProperties() == null) {
             if (properties.isSplitCommandByLines()) {

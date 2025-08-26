@@ -1,20 +1,15 @@
 package com.github.pilovr.mintopi.client;
 
 import com.github.pilovr.mintopi.client.store.Store;
-import com.github.pilovr.mintopi.client.tools.CommandResultBuilder;
+import com.github.pilovr.mintopi.client.tools.TextFromCollectionProvider;
 import com.github.pilovr.mintopi.client.tools.MediaConversionEvent;
 import com.github.pilovr.mintopi.client.tools.MediaQueue;
 import com.github.pilovr.mintopi.codec.whatsapp.WhatsappEventDecoder;
 import com.github.pilovr.mintopi.domain.account.Account;
-import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
-import com.github.pilovr.mintopi.domain.message.ExtendedMessage;
-import com.github.pilovr.mintopi.domain.message.Message;
-import com.github.pilovr.mintopi.domain.message.ReactionMessage;
+import com.github.pilovr.mintopi.domain.event.EventContext;
+import com.github.pilovr.mintopi.domain.payload.message.MessagePayload;
+import com.github.pilovr.mintopi.domain.payload.message.ReactionMessagePayload;
 import com.github.pilovr.mintopi.domain.Listener;
-import com.github.pilovr.mintopi.domain.event.MessageEvent;
-import com.github.pilovr.mintopi.domain.message.attachment.AttachmentBuilder;
-import com.github.pilovr.mintopi.domain.message.attachment.AttachmentType;
-import com.github.pilovr.mintopi.domain.message.builder.ExtendedMessageBuilder;
 import com.github.pilovr.mintopi.domain.room.Room;
 import com.github.pilovr.mintopi.client.listener.WhatsappInternalListener;
 import com.github.pilovr.mintopi.util.QrHandler;
@@ -113,7 +108,7 @@ public sealed class WhatsappClientAdaptee <R extends Room, A extends Account> im
         return null;
     }
 
-    public it.auties.whatsapp.model.message.model.Message buildInternalMessage(Message message){
+    public it.auties.whatsapp.model.message.model.Message buildInternalMessage(MessagePayload message){
         return switch(message.getType().getMessageCategory()){
             case EXTENDED -> {
                 ExtendedMessage extendedMessage = (ExtendedMessage) message;
@@ -147,7 +142,7 @@ public sealed class WhatsappClientAdaptee <R extends Room, A extends Account> im
     }
 
     @Override
-    public MessageEvent<? ,R, A> sendMessage(Room room, Message message) {
+    public EventContext<R, A, ?> sendMessage(Room room, MessagePayload message) {
         Jid target = Jid.of(room.getId());
         MessageInfo res = switch(message.getType().getMessageCategory()){
             case EXTENDED -> {
@@ -196,7 +191,7 @@ public sealed class WhatsappClientAdaptee <R extends Room, A extends Account> im
                 yield api.sendMessage(target, toSend);
             }
             case REACTION -> {
-                ReactionMessage reactionMessage = (ReactionMessage) message;
+                ReactionMessagePayload reactionMessage = (ReactionMessagePayload) message;
                 yield  api.sendReaction((MessageInfo) message.getPayload(), reactionMessage.getReaction());
             }
             case SPECIAL -> {
@@ -227,10 +222,10 @@ public sealed class WhatsappClientAdaptee <R extends Room, A extends Account> im
             if(participant.role() == ChatRole.FOUNDER) {
                 roles.add("admin");
             }
-            members.put(store.getOrCreateAccount(participant.jid().toString(), Platform.Whatsapp, null), roles);
+            members.put(store.getOrCreateAccount(participant.jid().toString(), Platform.WHATSAPP, null), roles);
         });
         room.setMembers(members);
-        room.setFounder(store.getOrCreateAccount(meta.founder().toString(), Platform.Whatsapp, null));
+        room.setFounder(store.getOrCreateAccount(meta.founder().toString(), Platform.WHATSAPP, null));
         room.setDescription(meta.description().toString());
         room.setEphemeralExpiration(meta.ephemeralExpirationSeconds());
         return room;
@@ -238,14 +233,14 @@ public sealed class WhatsappClientAdaptee <R extends Room, A extends Account> im
     }
 
     @Override
-    public Flux<Message> executeMediaConversion(ExtendedMessageEvent<R, A> origin, AttachmentType target, int attachmentIndex, CommandResultBuilder b) {
+    public Flux<MessagePayload> executeMediaConversion(ExtendedMessageEvent<R, A> origin, AttachmentType target, int attachmentIndex, TextFromCollectionProvider b) {
         AtomicReference<MessageEvent> sentMessageEvent = new AtomicReference<>();
 
         return mediaQueue.addToQueue(origin, target, attachmentIndex)
                 .flatMap(event -> {
                     switch (event.eventType()) {
                         case CONVERSION_STARTED -> {
-                            Message message = b.setKey("conversion_started")
+                            MessagePayload message = b.setKey("conversion_started")
                                     .addPlaceholder("position", String.valueOf(event.pos()))
                                     .buildAndSend();
                             sentMessage.set(message);
@@ -259,7 +254,7 @@ public sealed class WhatsappClientAdaptee <R extends Room, A extends Account> im
                             return Mono.empty();
                         }
                         case CONVERSION_SUCCEEDED -> {
-                            Message message = b.setMessageBuilder(
+                            MessagePayload message = b.setMessageBuilder(
                                     new ExtendedMessageBuilder().addAttachment(
                                             new AttachmentBuilder(target)
                                                     .downloadedMedia(event.result())

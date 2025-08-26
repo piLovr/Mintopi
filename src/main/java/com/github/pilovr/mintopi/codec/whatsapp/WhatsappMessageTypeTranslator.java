@@ -1,7 +1,5 @@
 package com.github.pilovr.mintopi.codec.whatsapp;
 
-import com.github.pilovr.mintopi.domain.message.MessageType;
-import com.github.pilovr.mintopi.domain.message.attachment.AttachmentType;
 import it.auties.whatsapp.model.message.model.Message;
 
 import java.util.HashMap;

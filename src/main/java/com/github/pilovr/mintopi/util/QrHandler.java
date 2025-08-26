@@ -1,7 +1,6 @@
 package com.github.pilovr.mintopi.util;
 
 import com.github.pilovr.mintopi.client.Client;
-import com.github.pilovr.mintopi.domain.message.ExtendedMessage;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.MultiFormatWriter;

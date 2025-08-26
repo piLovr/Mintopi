@@ -37,8 +37,8 @@ public class ClientFactory<R extends Room, A extends Account> {
 
     public Client<R,A> createClient(Platform platform, String alias){
         Client<R,A> c =  switch(platform){
-            case Whatsapp, WhatsappMobile ->
-                    platform == Platform.Whatsapp ? new WhatsappClientAdaptee<>(alias, wIlOP.getObject(), store, decoderOP.getObject(), mediaQueue) : new WhatsappMobileClientAdaptee<>(alias, wIlOP.getObject(),store, decoderOP.getObject(), mediaQueue);
+            case WHATSAPP, WhatsappMobile ->
+                    platform == Platform.WHATSAPP ? new WhatsappClientAdaptee<>(alias, wIlOP.getObject(), store, decoderOP.getObject(), mediaQueue) : new WhatsappMobileClientAdaptee<>(alias, wIlOP.getObject(),store, decoderOP.getObject(), mediaQueue);
             default -> throw new IllegalArgumentException("Unsupported platform: " + platform);
         };
         c.addListener(new Listener() {

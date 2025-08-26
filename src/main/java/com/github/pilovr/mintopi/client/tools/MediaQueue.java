@@ -1,11 +1,8 @@
 package com.github.pilovr.mintopi.client.tools;
 
-import com.github.pilovr.mintopi.domain.event.ExtendedMessageEvent;
-import com.github.pilovr.mintopi.domain.message.attachment.AttachmentType;
 import com.github.pilovr.mintopi.util.MediaConverter;
 import org.javatuples.Pair;
 import org.javatuples.Quartet;
-import org.javatuples.Triplet;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -13,7 +10,6 @@ import reactor.core.publisher.FluxSink;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service

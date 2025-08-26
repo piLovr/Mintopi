@@ -1,6 +1,5 @@
 package com.github.pilovr.mintopi.util;
 
-import com.github.pilovr.mintopi.domain.message.attachment.AttachmentType;
 import org.javatuples.Pair;
 
 import java.io.IOException;

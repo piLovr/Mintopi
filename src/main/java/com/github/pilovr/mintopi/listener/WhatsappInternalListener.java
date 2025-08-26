@@ -1,12 +1,11 @@
-package com.github.pilovr.mintopi.client.listener;
+package com.github.pilovr.mintopi.listener;
 
 import com.github.pilovr.mintopi.subscriber.command.CommandHandler;
 import com.github.pilovr.mintopi.config.MintopiProperties;
-import com.github.pilovr.mintopi.codec.whatsapp.WhatsappEventDecoder;
+import com.github.pilovr.mintopi.codec.whatsapp.WhatsappCodec;
 import com.github.pilovr.mintopi.client.Client;
-import com.github.pilovr.mintopi.domain.Listener;
 import com.github.pilovr.mintopi.domain.payload.message.ReactionMessagePayload;
-import com.github.pilovr.mintopi.client.tools.CommandRateLimiter;
+import com.github.pilovr.mintopi.tools.CommandRateLimiter;
 import it.auties.whatsapp.api.Whatsapp;
 import it.auties.whatsapp.api.WhatsappDisconnectReason;
 import it.auties.whatsapp.api.WhatsappListener;
@@ -30,7 +29,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Scope("prototype")
 public class WhatsappInternalListener implements WhatsappListener, InternalListener {
     private final List<Listener> listeners = new CopyOnWriteArrayList<>();
-    private final WhatsappEventDecoder decoder;
+    private final WhatsappCodec decoder;
     private final CommandRateLimiter messageDoorman;
     private final CommandHandler commandHandler;
     private final MintopiProperties properties;
@@ -39,7 +38,7 @@ public class WhatsappInternalListener implements WhatsappListener, InternalListe
     private Client client;
 
     @Autowired
-    public WhatsappInternalListener(WhatsappEventDecoder decoder, CommandRateLimiter messageDoorman, CommandHandler commandHandler, MintopiProperties properties){
+    public WhatsappInternalListener(WhatsappCodec decoder, CommandRateLimiter messageDoorman, CommandHandler commandHandler, MintopiProperties properties){
         this.decoder = decoder;
         this.messageDoorman = messageDoorman;
         this.commandHandler = commandHandler;

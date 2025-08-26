@@ -1,4 +1,4 @@
-package com.github.pilovr.mintopi.client.store;
+package com.github.pilovr.mintopi.store;
 
 import com.github.pilovr.mintopi.client.Platform;
 import com.github.pilovr.mintopi.domain.account.Account;

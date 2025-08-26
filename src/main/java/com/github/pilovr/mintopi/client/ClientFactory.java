@@ -1,10 +1,12 @@
 package com.github.pilovr.mintopi.client;
 
-import com.github.pilovr.mintopi.client.store.Store;
-import com.github.pilovr.mintopi.client.tools.MediaQueue;
-import com.github.pilovr.mintopi.codec.whatsapp.WhatsappEventDecoder;
-import com.github.pilovr.mintopi.domain.Listener;
-import com.github.pilovr.mintopi.client.listener.WhatsappInternalListener;
+import com.github.pilovr.mintopi.client.whatsapp.WhatsappClientAdaptee;
+import com.github.pilovr.mintopi.client.whatsapp.WhatsappMobileClientAdaptee;
+import com.github.pilovr.mintopi.store.Store;
+import com.github.pilovr.mintopi.tools.MediaQueue;
+import com.github.pilovr.mintopi.codec.whatsapp.WhatsappCodec;
+import com.github.pilovr.mintopi.listener.Listener;
+import com.github.pilovr.mintopi.listener.WhatsappInternalListener;
 import com.github.pilovr.mintopi.domain.account.Account;
 import com.github.pilovr.mintopi.domain.room.Room;
 import org.springframework.beans.factory.ObjectProvider;
@@ -16,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class ClientFactory<R extends Room, A extends Account> {
-    private final ObjectProvider<WhatsappEventDecoder<R,A>> decoderOP;
+    private final ObjectProvider<WhatsappCodec<R,A>> decoderOP;
     private final ObjectProvider<WhatsappInternalListener> wIlOP;
     private final Store<R, A> store;
     private final Set<Client<R,A>> clients = ConcurrentHashMap.newKeySet();
@@ -24,7 +26,7 @@ public class ClientFactory<R extends Room, A extends Account> {
 
     @Autowired
     public ClientFactory(
-            ObjectProvider<WhatsappEventDecoder<R,A>> decoder,
+            ObjectProvider<WhatsappCodec<R,A>> decoder,
             ObjectProvider<WhatsappInternalListener> wIlOP,
             Store<R, A> store,
             MediaQueue mediaQueue

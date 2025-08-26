@@ -1,4 +1,4 @@
-package com.github.pilovr.mintopi.client.tools;
+package com.github.pilovr.mintopi.tools;
 
 import lombok.Getter;
 

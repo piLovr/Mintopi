@@ -1,8 +1,9 @@
-package com.github.pilovr.mintopi.client.tools;
+package com.github.pilovr.mintopi.subscriber.command;
 
 import com.github.pilovr.mintopi.domain.event.CommandContext;
 import com.github.pilovr.mintopi.domain.payload.message.TextMessagePayload;
 import com.github.pilovr.mintopi.subscriber.CommandScope;
+import com.github.pilovr.mintopi.tools.JsonTextProvider;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -11,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 @RequiredArgsConstructor
-public class TextFromCollectionProvider {
+public class CommandReultBuilder {
     private final String commandOrSubscriberName;
     private final String preKey;
     private final String language;
@@ -43,11 +44,11 @@ public class TextFromCollectionProvider {
     }
 
     public String getReaction(String key){
-        return I18nProvider.getText(language, preKey, commandOrSubscriberName, key, "emoji");
+        return JsonTextProvider.getText(language, preKey, commandOrSubscriberName, key, "emoji");
     }
 
     public String getText(String key){
-        String text = I18nProvider.getText(language, "commands", commandOrSubscriberName, "response", key, responseType.getJsonAlias());
+        String text = JsonTextProvider.getText(language, "commands", commandOrSubscriberName, "response", key, responseType.getJsonAlias());
         if(text == null) return null;
 
         if(responseType == ResponseType.REACTION){
@@ -64,6 +65,8 @@ public class TextFromCollectionProvider {
         return text.replace("<user>", commandContext.getEvent().getSender().getPushName());
         //todo...
     }
+
+
 
 
 }

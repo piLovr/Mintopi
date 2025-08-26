@@ -1,6 +1,6 @@
 package com.github.pilovr.mintopi.codec.whatsapp;
 
-import com.github.pilovr.mintopi.client.store.Store;
+import com.github.pilovr.mintopi.store.Store;
 import com.github.pilovr.mintopi.domain.account.Account;
 import com.github.pilovr.mintopi.client.Client;
 import com.github.pilovr.mintopi.client.Platform;
@@ -23,12 +23,12 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-public class WhatsappEventDecoder<R extends Room, A extends Account> extends MultiCodec {
+public class WhatsappCodec<R extends Room, A extends Account> extends MultiCodec {
     @Setter
     private Store<R, A> store;
 
     @Autowired
-    public WhatsappEventDecoder(Store<R,A> store) {
+    public WhatsappCodec(Store<R,A> store) {
         this.register(ChatMessageInfo.class, this::decodeChatMessageInfo);
         this.register(MessageInfo.class, this::decodeMessageInfo);
         this.register(Node.class, this::decodeStubNode);

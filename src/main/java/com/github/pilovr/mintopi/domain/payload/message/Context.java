@@ -32,17 +32,19 @@ public class Context {
         return mentions.contains(account);
     }
 
-    public List<Account> getMentionsInText(String text) {
+    public void addMentionsFromText(String text) {
         if (text == null || text.isEmpty() || mentions == null || mentions.isEmpty()) {
-            return List.of();
+            return;
         }
+
         return mentions.stream().filter(mention -> {
             String mentionTag = mention.getPlatformMention();
             return mentionTag != null && !mentionTag.isEmpty() && text.contains(mentionTag);
         }).toList();
     }
 
-    public boolean determineHideTagsUsage(String text) {
+    public boolean d
+    etermineHideTagsUsage(String text) {
         if (text == null || text.isEmpty() || mentions == null || mentions.isEmpty()) {
             usesHideTags = false;
             return false;

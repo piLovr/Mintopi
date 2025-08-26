@@ -3,14 +3,12 @@ package com.github.pilovr.mintopi.domain.payload.message;
 import com.github.pilovr.mintopi.client.Platform;
 import com.github.pilovr.mintopi.domain.account.Account;
 import com.github.pilovr.mintopi.domain.payload.message.attachment.Attachment;
-import io.netty.handler.codec.string.LineSeparator;
-import lombok.Builder;
-import lombok.Getter;
+import com.github.pilovr.mintopi.subscriber.command.CommandProperties;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-@Builder(toBuilder = true) @Getter
 public final class TextMessagePayload extends MessagePayload {
     private final String text;
     private final Context context;
@@ -57,5 +55,52 @@ public final class TextMessagePayload extends MessagePayload {
             }
         }
         return TextMessagePayload.builder().text(sb.toString()).context(Context.builder().mentions(mentions).build()).build();
+    }
+    public TextMessagePayloadBuilder toBuilder(){
+        return new TextMessagePayloadBuilder();
+    }
+
+    public static TextMessagePayloadBuilder builder(){
+        return new TextMessagePayloadBuilder();
+    }
+    public static class TextMessagePayloadBuilder{
+        private String text;
+        private Context context;
+        private CommandProperties textCommandProperties;
+        private List<Attachment> attachments; //LinkedList
+
+        public TextMessagePayloadBuilder text(String text){
+            this.text = text;
+            return this;
+        }
+
+        public TextMessagePayloadBuilder context(Context context){
+            this.context = context;
+            return this;
+        }
+
+        public TextMessagePayloadBuilder  textCommandProperties(CommandProperties textCommandProperties){
+            this.textCommandProperties = textCommandProperties;
+            return this;
+        }
+
+        public TextMessagePayloadBuilder attachments(List<Attachment> attachments){
+            this.attachments = attachments;
+            return this;
+        }
+
+        public TextMessagePayloadBuilder addAttachment(Attachment attachment){
+            if(this.attachments == null) this.attachments = new ArrayList<>();
+            this.attachments.add(attachment);
+            return this;
+        }
+
+        public Context.ContextBuilder  contextBuilder(){
+            return new Context.ContextBuilder();
+        }
+
+        public TextMessagePayloadBuilder contextWithMentionsFromText(){
+            this.context = new Context.ContextBuilder().
+        }
     }
 }

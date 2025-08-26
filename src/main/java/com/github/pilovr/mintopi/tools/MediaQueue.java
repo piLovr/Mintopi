@@ -1,4 +1,4 @@
-package com.github.pilovr.mintopi.client.tools;
+package com.github.pilovr.mintopi.tools;
 
 import com.github.pilovr.mintopi.util.MediaConverter;
 import org.javatuples.Pair;

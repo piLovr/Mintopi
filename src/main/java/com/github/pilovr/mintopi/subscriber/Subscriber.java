@@ -1,6 +1,5 @@
-package com.github.pilovr.mintopi.subscriber.command;
+package com.github.pilovr.mintopi.subscriber;
 
-import com.github.pilovr.mintopi.subscriber.CommandSubscriber;
 import org.springframework.stereotype.Service;
 
 import java.lang.annotation.ElementType;

@@ -1,6 +1,6 @@
-package com.github.pilovr.mintopi.subscriber.command;
+package com.github.pilovr.mintopi.subscriber;
 
-import com.github.pilovr.mintopi.subscriber.CommandSubscriber;
+import com.github.pilovr.mintopi.subscriber.command.DummyClass;
 import org.springframework.stereotype.Service;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -12,6 +12,7 @@ import java.lang.annotation.Target;
 @Service
 public @interface Command {
     String name();
+    String category() default "";
     String shortDescription() default "";
     String longDescription() default "";
     String[] aliases() default {};

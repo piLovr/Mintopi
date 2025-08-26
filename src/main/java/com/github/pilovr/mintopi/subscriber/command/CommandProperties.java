@@ -1,4 +1,4 @@
-package com.github.pilovr.mintopi.domain.payload.message;
+package com.github.pilovr.mintopi.subscriber.command;
 
 import com.github.pilovr.mintopi.domain.account.Account;
 import com.github.pilovr.mintopi.domain.room.Room;

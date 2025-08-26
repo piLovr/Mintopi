@@ -1,17 +1,17 @@
 package com.github.pilovr.mintopi.client;
 
 
-import com.github.pilovr.mintopi.client.store.Store;
-import com.github.pilovr.mintopi.client.tools.TextFromCollectionProvider;
-import com.github.pilovr.mintopi.client.tools.MediaConversionEvent;
-import com.github.pilovr.mintopi.domain.Listener;
+import com.github.pilovr.mintopi.store.Store;
+import com.github.pilovr.mintopi.subscriber.command.CommandReultBuilder;
+import com.github.pilovr.mintopi.tools.MediaConversionEvent;
+import com.github.pilovr.mintopi.listener.Listener;
 import com.github.pilovr.mintopi.domain.account.Account;
 import com.github.pilovr.mintopi.domain.event.EventContext;
 import com.github.pilovr.mintopi.domain.payload.message.MessagePayload;
 import com.github.pilovr.mintopi.domain.room.Room;
 import reactor.core.publisher.Flux;
 
-public sealed interface Client<R extends Room, A extends Account> permits WhatsappClientAdaptee {
+public interface Client<R extends Room, A extends Account> {
     void setConnected(boolean value);
     void connect();
     void disconnect();
@@ -33,7 +33,7 @@ public sealed interface Client<R extends Room, A extends Account> permits Whatsa
     R updateRoomMetadata(R room);
     Store<R, A> getStore();
 
-    Flux<MessagePayload> executeMediaConversion(ExtendedMessageEvent<R, A> origin, AttachmentType target, int attachmentIndex, TextFromCollectionProvider b);
+    Flux<MessagePayload> executeMediaConversion(ExtendedMessageEvent<R, A> origin, AttachmentType target, int attachmentIndex, CommandReultBuilder b);
 
     Flux<MediaConversionEvent> queueMediaConversion(ExtendedMessageEvent<R,A> origin, AttachmentType target, int attachmentIndex);
 }

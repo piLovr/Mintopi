@@ -1,9 +1,9 @@
-package com.github.pilovr.mintopi.client;
+package com.github.pilovr.mintopi.client.whatsapp;
 
-import com.github.pilovr.mintopi.client.store.Store;
-import com.github.pilovr.mintopi.client.tools.MediaQueue;
-import com.github.pilovr.mintopi.codec.whatsapp.WhatsappEventDecoder;
-import com.github.pilovr.mintopi.client.listener.WhatsappInternalListener;
+import com.github.pilovr.mintopi.store.Store;
+import com.github.pilovr.mintopi.tools.MediaQueue;
+import com.github.pilovr.mintopi.codec.whatsapp.WhatsappCodec;
+import com.github.pilovr.mintopi.listener.WhatsappInternalListener;
 import com.github.pilovr.mintopi.domain.account.Account;
 import com.github.pilovr.mintopi.domain.room.Room;
 import it.auties.whatsapp.api.Whatsapp;
@@ -14,7 +14,7 @@ import java.util.Scanner;
 
 public final class WhatsappMobileClientAdaptee<R extends Room, A extends Account> extends WhatsappClientAdaptee<R, A> {
     private long phoneNumber;
-    public WhatsappMobileClientAdaptee(String alias, WhatsappInternalListener listener, Store<R,A> store, WhatsappEventDecoder<R,A> decoder, MediaQueue mediaQueue) {
+    public WhatsappMobileClientAdaptee(String alias, WhatsappInternalListener listener, Store<R,A> store, WhatsappCodec<R,A> decoder, MediaQueue mediaQueue) {
         super(alias, listener, store, decoder, mediaQueue);
     }
 

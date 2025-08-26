@@ -1,7 +1,6 @@
-package com.github.pilovr.mintopi.client.listener;
+package com.github.pilovr.mintopi.listener;
 
 import com.github.pilovr.mintopi.client.Client;
-import com.github.pilovr.mintopi.domain.Listener;
 
 public interface InternalListener {
     void registerListener(Listener listener);

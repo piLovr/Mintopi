@@ -1,4 +1,4 @@
-package com.github.pilovr.mintopi.client.store;
+package com.github.pilovr.mintopi.store;
 
 import com.github.pilovr.mintopi.client.Platform;
 import com.github.pilovr.mintopi.domain.account.Account;
@@ -27,8 +27,8 @@ public class DefaultInMemoryStore extends Store<Room, Account> {
 
     @Override
     public Room getOrCreateRoom(String id, Platform platform, String name) {
-        String idWithPlatform = platform != null ? platform.getIdPrefix() + "_" + id : id;
-        Room existingRoom = rooms.get(idWithPlatform);
+        String internalId = Room.buildInternalIdFromPlatformId(id, platform);
+        Room existingRoom = rooms.get(internalId);
         if (existingRoom != null) {
             if (!existingRoom.getName().equals(name)) {
                 existingRoom.setName(name);
@@ -36,15 +36,15 @@ public class DefaultInMemoryStore extends Store<Room, Account> {
             return existingRoom;
         } else {
             Room room = createRoom(id, platform, name);
-            rooms.put(idWithPlatform, room);
+            rooms.put(internalId, room);
             return room;
         }
     }
 
     @Override
     public Account getOrCreateAccount(String id, Platform platform, String pushName) {
-        String idWithPlatform = platform != null ? platform.getIdPrefix() + "_" + id : id;
-        Account existingAccount = accounts.get(idWithPlatform);
+        String internalId = Account.buildInternalIdFromPlatformId(id, platform);
+        Account existingAccount = accounts.get(internalId);
         if (existingAccount != null) {
             if(!existingAccount.getPushName().equals(pushName)){
                 existingAccount.setPushName(pushName);
@@ -52,7 +52,7 @@ public class DefaultInMemoryStore extends Store<Room, Account> {
             return existingAccount;
         } else {
             Account account = createAccount(id, platform, pushName);
-            accounts.put(idWithPlatform, account);
+            accounts.put(internalId, account);
             return account;
         }
     }

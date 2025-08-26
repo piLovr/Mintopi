@@ -3,6 +3,7 @@ package com.github.pilovr.mintopi.domain.account;
 import com.github.pilovr.mintopi.client.Platform;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 
 @Getter
 public class Account {
@@ -15,12 +16,12 @@ public class Account {
     public Account(@NonNull String platformId, Platform platform, String pushName) {
         this.platformId = platformId;
         this.platform = platform;
-        this.rawId = extractInternalId(platformId, platform);
-        this.internalId = rawId + "@" + platform.toString();
+        this.rawId = extractRawIdFromPlatformId(platformId, platform);
+        this.internalId = buildInternalIdFromPlatformId(platformId, platform);
         if(pushName != null) {
-            pushName = removeNonAsciiCharacters(pushName);
+            this.pushName = removeNonAsciiCharacters(pushName);
         }else{
-            pushName = null;
+            this.pushName = null;
         }
     }
     public String removeNonAsciiCharacters(String input) {
@@ -32,7 +33,7 @@ public class Account {
         this.pushName = removeNonAsciiCharacters(pushName);
     }
 
-    private String extractInternalId(String platformId, Platform platform) {
+    public static String extractRawIdFromPlatformId(String platformId, Platform platform) {
         //Discord IDs are numeric
         //Telegram usernames start with @
         //WhatsApp IDs are phone numbers
@@ -46,6 +47,9 @@ public class Account {
             case MATRIX -> platformId.replaceAll("@|:.*", ""); //Matrix IDs start with @ and have a domain
             default -> platformId;
         };
+    }
+    public static String buildInternalIdFromPlatformId(String platformId, Platform platform){
+        return extractRawIdFromPlatformId(platformId, platform) + "@" + platform.toString() + "a";
     }
     public String getPlatformMention() {
         switch (platform) {

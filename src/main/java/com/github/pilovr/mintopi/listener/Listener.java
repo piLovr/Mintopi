@@ -1,4 +1,4 @@
-package com.github.pilovr.mintopi.domain;
+package com.github.pilovr.mintopi.listener;
 
 import com.github.pilovr.mintopi.domain.account.Account;
 import com.github.pilovr.mintopi.domain.room.Room;

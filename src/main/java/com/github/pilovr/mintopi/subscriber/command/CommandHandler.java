@@ -2,7 +2,6 @@ package com.github.pilovr.mintopi.subscriber.command;
 
 import com.github.pilovr.mintopi.client.Client;
 import com.github.pilovr.mintopi.config.MintopiProperties;
-import com.github.pilovr.mintopi.domain.payload.message.CommandProperties;
 import com.github.pilovr.mintopi.domain.room.Room;
 import com.github.pilovr.mintopi.util.LevenshteinUtil;
 import jakarta.annotation.PostConstruct;

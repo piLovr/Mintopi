@@ -1,17 +1,19 @@
-package com.github.pilovr.mintopi.client;
+package com.github.pilovr.mintopi.client.whatsapp;
 
-import com.github.pilovr.mintopi.client.store.Store;
-import com.github.pilovr.mintopi.client.tools.TextFromCollectionProvider;
-import com.github.pilovr.mintopi.client.tools.MediaConversionEvent;
-import com.github.pilovr.mintopi.client.tools.MediaQueue;
-import com.github.pilovr.mintopi.codec.whatsapp.WhatsappEventDecoder;
+import com.github.pilovr.mintopi.client.Client;
+import com.github.pilovr.mintopi.client.Platform;
+import com.github.pilovr.mintopi.store.Store;
+import com.github.pilovr.mintopi.subscriber.command.CommandReultBuilder;
+import com.github.pilovr.mintopi.tools.MediaConversionEvent;
+import com.github.pilovr.mintopi.tools.MediaQueue;
+import com.github.pilovr.mintopi.codec.whatsapp.WhatsappCodec;
 import com.github.pilovr.mintopi.domain.account.Account;
 import com.github.pilovr.mintopi.domain.event.EventContext;
 import com.github.pilovr.mintopi.domain.payload.message.MessagePayload;
 import com.github.pilovr.mintopi.domain.payload.message.ReactionMessagePayload;
-import com.github.pilovr.mintopi.domain.Listener;
+import com.github.pilovr.mintopi.listener.Listener;
 import com.github.pilovr.mintopi.domain.room.Room;
-import com.github.pilovr.mintopi.client.listener.WhatsappInternalListener;
+import com.github.pilovr.mintopi.listener.WhatsappInternalListener;
 import com.github.pilovr.mintopi.util.QrHandler;
 import it.auties.whatsapp.api.Whatsapp;
 import it.auties.whatsapp.api.WhatsappWebHistoryPolicy;
@@ -38,7 +40,7 @@ public sealed class WhatsappClientAdaptee <R extends Room, A extends Account> im
     @Getter
     protected String alias;
     protected Whatsapp api;
-    private final WhatsappEventDecoder<R,A> decoder;
+    private final WhatsappCodec<R,A> decoder;
     protected WhatsappInternalListener internalListener;
     @Getter
     protected Store<R,A> store;
@@ -47,7 +49,7 @@ public sealed class WhatsappClientAdaptee <R extends Room, A extends Account> im
     protected boolean connected;
     private final MediaQueue mediaQueue;
 
-    public WhatsappClientAdaptee(String alias, WhatsappInternalListener internalListener, Store<R,A> store, WhatsappEventDecoder<R,A> decoder, MediaQueue mediaQueue) {
+    public WhatsappClientAdaptee(String alias, WhatsappInternalListener internalListener, Store<R,A> store, WhatsappCodec<R,A> decoder, MediaQueue mediaQueue) {
         this.alias = alias;
 
         this.store = store;
@@ -233,7 +235,7 @@ public sealed class WhatsappClientAdaptee <R extends Room, A extends Account> im
     }
 
     @Override
-    public Flux<MessagePayload> executeMediaConversion(ExtendedMessageEvent<R, A> origin, AttachmentType target, int attachmentIndex, TextFromCollectionProvider b) {
+    public Flux<MessagePayload> executeMediaConversion(ExtendedMessageEvent<R, A> origin, AttachmentType target, int attachmentIndex, CommandReultBuilder b) {
         AtomicReference<MessageEvent> sentMessageEvent = new AtomicReference<>();
 
         return mediaQueue.addToQueue(origin, target, attachmentIndex)

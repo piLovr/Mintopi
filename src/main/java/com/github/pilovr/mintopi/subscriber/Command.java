@@ -18,5 +18,6 @@ public @interface Command {
     String[] aliases() default {};
     String[] emojiAliases() default {};
     Class<? extends CommandSubscriber> parent() default DummyClass.class;
+    String[] permissionsRequired() default {};
     // Add any other metadata fields you might need
 }

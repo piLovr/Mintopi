@@ -86,7 +86,7 @@ public class WhatsappInternalListener implements WhatsappListener, InternalListe
                 }
                 for (Listener listener : listeners) {
                     listener.onMessage(e);
-                    listener.onExtendedMessage(em);
+                    listener.onTextMessage(em);
                 }
             }else if (e.getMessage() instanceof ReactionMessagePayload r) {
                 ReactionMessageEvent eRe = new ReactionMessageEvent(e);
@@ -131,6 +131,17 @@ public class WhatsappInternalListener implements WhatsappListener, InternalListe
     @Override
     public void onGroupPictureChanged(Whatsapp whatsapp, Chat group) {
         WhatsappListener.super.onGroupPictureChanged(whatsapp, group);
+    }
+
+    @Override
+    public void onDisconnected(WhatsappDisconnectReason reason) {
+        for (Listener listener : listeners) {
+            try {
+                listener.onDisconnected(); //todo
+            } catch (Exception e) {
+                System.out.println("Error in onDisconnected: " + e.getMessage());
+            }
+        }
     }
 
     @Override

@@ -12,9 +12,9 @@ import it.auties.whatsapp.model.companion.CompanionDevice;
 
 import java.util.Scanner;
 
-public final class WhatsappMobileClientAdaptee<R extends Room, A extends Account> extends WhatsappClientAdaptee<R, A> {
+public final class WhatsappMobileClient<R extends Room, A extends Account> extends WhatsappClient<R, A> {
     private long phoneNumber;
-    public WhatsappMobileClientAdaptee(String alias, WhatsappInternalListener listener, Store<R,A> store, WhatsappCodec<R,A> decoder, MediaQueue mediaQueue) {
+    public WhatsappMobileClient(String alias, WhatsappInternalListener listener, Store<R,A> store, WhatsappCodec<R,A> decoder, MediaQueue mediaQueue) {
         super(alias, listener, store, decoder, mediaQueue);
     }
 
@@ -23,7 +23,7 @@ public final class WhatsappMobileClientAdaptee<R extends Room, A extends Account
         api = Whatsapp.builder()
                 .mobileClient()
                 .newConnection(alias)
-                .device(CompanionDevice.ios(true)) // Make sure to select the correct account type(business or personal) or you'll get error 401
+                .device(CompanionDevice.ios(true)) // Make sure to select the correct sender type(business or personal) or you'll get error 401
                 .register(phoneNumber, WhatsappVerificationHandler.Mobile.sms(() -> {
                     String veriCode = "";
                     veriCode = internalListener.onInputRequired("Enter the verification code: ");

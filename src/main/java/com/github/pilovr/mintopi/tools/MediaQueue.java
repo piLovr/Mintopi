@@ -1,8 +1,10 @@
 package com.github.pilovr.mintopi.tools;
 
+import com.github.pilovr.mintopi.domain.payload.message.attachment.Attachment;
 import com.github.pilovr.mintopi.util.MediaConverter;
 import org.javatuples.Pair;
 import org.javatuples.Quartet;
+import org.javatuples.Triplet;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -14,36 +16,25 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 public class MediaQueue {
-    private final Set<Pair<AttachmentType, AttachmentType>> supportedConversions;
-    private final Queue<Quartet<AttachmentType, AttachmentType, byte[], FluxSink<MediaConversionEvent>>> queue;
+    private final Queue<Triplet<Attachment, String, FluxSink<MediaConversionEvent>>> queue;
     private final AtomicBoolean isProcessing;
     private Thread processingThread;
 
     public MediaQueue() {
-        this.supportedConversions = Set.of(
-                Pair.with(AttachmentType.IMAGE, AttachmentType.STICKER),
-                Pair.with(AttachmentType.STICKER, AttachmentType.IMAGE)
-        );
         this.queue = new LinkedList<>();
         this.isProcessing = new AtomicBoolean(false);
     }
 
-    public boolean isSupportedConversion(AttachmentType from, AttachmentType to) {
-        return supportedConversions.contains(Pair.with(from, to));
-    }
-
-    public Flux<MediaConversionEvent> addToQueue(ExtendedMessageEvent<?,?> origin, AttachmentType targetType, int attachmentIndex) {
-        AttachmentType originType = origin.getMessage().getAttachments().get(attachmentIndex).getType();
-        if (!isSupportedConversion(originType, targetType)) {
+    public Flux<MediaConversionEvent> addToQueue(Attachment attachment, String targetMimeType) {
+        if (!MediaConverter.isSupportedConversion(attachment.getMimeType(), targetMimeType)) {
             return Flux.create(emitter -> {
                 emitter.next(new MediaConversionEvent(MediaConversionEvent.EventType.CONVERSION_FAILED,getQueueSize(),null));
                 emitter.complete();
             });
         }
 
-        byte[] originData = origin.downloadAttachments().get(attachmentIndex);
         Flux<MediaConversionEvent> flux = Flux.create(emitter -> {
-            queue.add(Quartet.with(originType, targetType, originData, emitter));
+            queue.add(Triplet.with(attachment, targetMimeType, emitter));
             emitter.next(new MediaConversionEvent(MediaConversionEvent.EventType.CONVERSION_STARTED,getQueueSize(),null));
         });
 
@@ -65,7 +56,7 @@ public class MediaQueue {
 
     private void processQueue() {
         while (isProcessing.get() && !Thread.currentThread().isInterrupted()) {
-            Quartet<AttachmentType, AttachmentType, byte[], FluxSink<MediaConversionEvent>> element;
+            Triplet<Attachment, String, FluxSink<MediaConversionEvent>> element;
             synchronized (queue) {
                 element = queue.poll();
                 updatePositions();
@@ -83,18 +74,18 @@ public class MediaQueue {
 
             try {
                 // Process this media object and complete the future
-                element.getValue3().next(new MediaConversionEvent(MediaConversionEvent.EventType.CONVERSION_STARTED,0,null));
+                element.getValue2().next(new MediaConversionEvent(MediaConversionEvent.EventType.CONVERSION_STARTED,0,null));
                 byte[] convertedMedia = processMediaConversion(element);
-                element.getValue3().next(new MediaConversionEvent(MediaConversionEvent.EventType.CONVERSION_SUCCEEDED, 0, convertedMedia));
+                element.getValue2().next(new MediaConversionEvent(MediaConversionEvent.EventType.CONVERSION_SUCCEEDED, 0, convertedMedia));
             } catch (Exception e) {
-                element.getValue3().next(new MediaConversionEvent(MediaConversionEvent.EventType.CONVERSION_FAILED, 0, null));
+                element.getValue2().next(new MediaConversionEvent(MediaConversionEvent.EventType.CONVERSION_FAILED, 0, null));
             }
         }
         isProcessing.set(false);
     }
 
-    private byte[] processMediaConversion(Quartet<AttachmentType, AttachmentType, byte[], FluxSink<MediaConversionEvent>> element) {
-        return MediaConverter.convert(element.getValue2(), element.getValue0(), element.getValue1());
+    private byte[] processMediaConversion(Triplet<Attachment, String, FluxSink<MediaConversionEvent>> element) {
+        return MediaConverter.convert(element.getValue0().getData(), element.getValue0().getMimeType(), element.getValue1());
     }
 
     public void stopProcessing() {
@@ -116,8 +107,8 @@ public class MediaQueue {
 
     private void updatePositions(){
         int pos = getQueueSize();
-        for(Quartet<AttachmentType, AttachmentType, byte[], FluxSink<MediaConversionEvent>> item : queue){
-            item.getValue3().next(new MediaConversionEvent(MediaConversionEvent.EventType.POS_UPDATED, pos, null));
+        for(Triplet<Attachment, String, FluxSink<MediaConversionEvent>> item : queue){
+            item.getValue2().next(new MediaConversionEvent(MediaConversionEvent.EventType.POS_UPDATED, pos, null));
             pos--;
         }
     }

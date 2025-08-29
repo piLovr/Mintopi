@@ -1,25 +1,27 @@
 package com.github.pilovr.mintopi.codec.whatsapp;
 
+import com.github.pilovr.mintopi.domain.event.EventContext;
+import com.github.pilovr.mintopi.domain.payload.Payload;
+import com.github.pilovr.mintopi.domain.payload.message.*;
+import com.github.pilovr.mintopi.domain.payload.message.attachment.Attachment;
 import com.github.pilovr.mintopi.store.Store;
 import com.github.pilovr.mintopi.domain.account.Account;
-import com.github.pilovr.mintopi.client.Client;
 import com.github.pilovr.mintopi.client.Platform;
 import com.github.pilovr.mintopi.domain.event.StubType;
 import com.github.pilovr.mintopi.domain.room.Room;
 import it.auties.whatsapp.model.info.*;
 import com.github.pilovr.mintopi.codec.MultiCodec;
 import it.auties.whatsapp.model.jid.Jid;
-import it.auties.whatsapp.model.media.MutableAttachmentProvider;
-import it.auties.whatsapp.model.message.model.MediaMessage;
-import it.auties.whatsapp.model.message.model.Message;
-import it.auties.whatsapp.model.message.model.MessageContainer;
+import it.auties.whatsapp.model.message.model.*;
 import it.auties.whatsapp.model.message.standard.*;
 import it.auties.whatsapp.model.node.Node;
 import lombok.Setter;
 
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -28,105 +30,203 @@ public class WhatsappCodec<R extends Room, A extends Account> extends MultiCodec
     private Store<R, A> store;
 
     @Autowired
-    public WhatsappCodec(Store<R,A> store) {
-        this.register(ChatMessageInfo.class, this::decodeChatMessageInfo);
-        this.register(MessageInfo.class, this::decodeMessageInfo);
-        this.register(Node.class, this::decodeStubNode);
+    public WhatsappCodec(Store<R, A> store) {
+        this.registerDecode(ChatMessageInfo.class, this::decodeChatMessageInfo);
+        this.registerDecode(MessageInfo.class, this::decodeMessageInfo);
+        this.registerDecode(Node.class, this::decodeStubNode);
 
         this.store = store;
     }
 
-    private MessageEvent<?, R, A> decodeMessageInfo(Client client, MessageInfo messageInfo){
-        if(messageInfo instanceof ChatMessageInfo chatMessageInfo){
-            return decodeChatMessageInfo(client, chatMessageInfo);
-        }else if(messageInfo instanceof NewsletterMessageInfo newsletterMessageInfo){
+    @Nullable
+    private EventContext<Payload, R, A> decodeMessageInfo(MessageInfo messageInfo) {
+        if (messageInfo instanceof ChatMessageInfo chatMessageInfo) {
+            return decodeChatMessageInfo(chatMessageInfo);
+        } else if (messageInfo instanceof NewsletterMessageInfo newsletterMessageInfo) {
             return null;
-        }else if(messageInfo instanceof MessageStatusInfo messageStatusInfo){
+        } else if (messageInfo instanceof MessageStatusInfo messageStatusInfo) {
             return null;
-        }else if(messageInfo instanceof QuotedMessageInfo quotedMessageInfo){
+        } else if (messageInfo instanceof QuotedMessageInfo quotedMessageInfo) {
             return null;
         }
         return null;
     }
 
-    private MessageEvent<?, R, A> decodeChatMessageInfo(Client client, ChatMessageInfo chatMessageInfo){
-        String id = chatMessageInfo.id();
-        Jid sender = chatMessageInfo.senderJid();
-        Jid parent = chatMessageInfo.parentJid();
+    private EventContext<Payload,R,A> decodeChatMessageInfo(ChatMessageInfo chatMessageInfo) {
+        MessageContainer container = chatMessageInfo.message();
 
-        A account = store.getOrCreateAccount(
-                sender.toString(),
-                Platform.WHATSAPP,
-                chatMessageInfo.pushName().orElse(null));
-        R room = store.getOrCreateRoom(
-                parent.toString(),
-                Platform.WHATSAPP,
-                chatMessageInfo.chatName()
-        );
+        ChatMessageKey key = chatMessageInfo.key();
+        EventContext.EventContextBuilder<Payload, R, A> builder = EventContext.<Payload, R, A>builder()
+                .originalObject(chatMessageInfo)
+                .platform(Platform.WHATSAPP)
+                .fromMe(key.fromMe())
+                .id(key.id())
+                .timestamp(Instant.ofEpochSecond(chatMessageInfo.timestampSeconds().isPresent() ? chatMessageInfo.timestampSeconds().getAsLong() : null))
+                .room(
+                    store.getOrCreateRoom(
+                        key.chatJid().toString(),
+                        Platform.WHATSAPP,
+                        chatMessageInfo.chatName())
+                )
+                .sender(
+                    store.getOrCreateAccount(
+                        key.senderJid().toString(),
+                        Platform.WHATSAPP,
+                        chatMessageInfo.pushName().orElse(null))
+                );
 
-        AttachmentType attachmentType = WhatsappMessageTypeTranslator.translateAttachment(chatMessageInfo.message().type());
-        MessageType messageType = attachmentType == null ? WhatsappMessageTypeTranslator.translate(chatMessageInfo.message().type()) : MessageType.TEXT_WITH_ATTACHMENTS;
+        MessageContext<R,A> context = null;
+        if(container.contentWithContext().isPresent()){
+            ContextualMessage originContext = container.contentWithContext().get();
+            if(originContext.contextInfo().isPresent()) {
+                ContextInfo contextInfo = originContext.contextInfo().get();
+                List<A> mentions = extractMentions(contextInfo.mentions());
 
-        MessageBuilder builder = switch(messageType.getMessageCategory()){
-            case REACTION -> new ReactionMessageBuilder(id, chatMessageInfo).setReaction(((ReactionMessage) chatMessageInfo.message().content()).content());
-            case EXTENDED -> {
-                ExtendedMessageBuilder extendedMessageBuilder = decodeMessageContainer(id, chatMessageInfo, chatMessageInfo.message());
+                EventContext.EventContextBuilder<Payload,R,A> quotedEventBuilder = null;
 
-                if(chatMessageInfo.message().contentWithContext().isPresent() && chatMessageInfo.message().contentWithContext().get().contextInfo().isPresent()) {
-                    if(chatMessageInfo.quotedMessage().isPresent()){
-                        QuotedMessageInfo q = chatMessageInfo.quotedMessage().get();
-                        extendedMessageBuilder.quoted(decodeMessageContainer(q.id(), q, q.message())
-                                .quotedMessageSender(store.getOrCreateAccount(q.senderJid().toString(), Platform.WHATSAPP, null))
-                                .build());
-                    }
+                if (contextInfo.quotedMessage().isPresent()) {
+                    Jid quotedSender = contextInfo.quotedMessageSenderJid().orElse(null);
+                    quotedEventBuilder = EventContext.<Payload, R, A>builder()
+                            .platform(Platform.WHATSAPP)
+                            .fromMe(false)
+                            .id(contextInfo.quotedMessageId().orElse(null))
+                            .room(
+                                store.getOrCreateRoom(
+                                    Objects.requireNonNull(contextInfo.quotedMessageChatJid().orElse(null)).toString(),
+                                    Platform.WHATSAPP,
+                                    null)
+                            )
+                            .sender(
+                                store.getOrCreateAccount(
+                                    quotedSender != null ? quotedSender.toString() : null,
+                                    Platform.WHATSAPP,
+                                    null)
+                            )
+                            .originalObject(contextInfo.quotedMessage().get());
+                    MessageContainer q = contextInfo.quotedMessage().get();
+                    quotedEventBuilder.payload(decodeMessageContainer(contextInfo.quotedMessage().get(), null));
                 }
-                yield extendedMessageBuilder;
+                context = new MessageContext<R,A>(
+                    mentions,
+                    quotedEventBuilder != null ? quotedEventBuilder.build() : null
+                );
             }
-            case SPECIAL -> null;
-            case NONE -> null;
-        };
+        }
 
+        MessagePayload messagePayload = decodeMessageContainer(container, context);
+        return builder.payload(messagePayload).build();
+    }
 
-        if(builder == null) return null;
-        return new MessageEvent<>( //members, name, pushname, client, ANIMATED
+    private EventContext<?,R,A> decodeStubNode(Node node){
+        var child = node.findChild();
+        if (child.isEmpty()) {
+            return null;
+        }
+
+        StubType stubType = StubType.of(child.get().description()).orElse(StubType.UNKNOWN);
+        if (stubType != StubType.UNKNOWN) {
+            return null;
+        }
+
+        var timestamp = node.attributes().getLong("t");
+
+        var fromJid = node.attributes()
+                .getRequiredJid("from");
+        var room = store.getOrCreateRoom(fromJid.toString(), Platform.WHATSAPP, null);
+        /*
+        return new StubEvent(
                 client,
-                id,
+                null,
                 Platform.WHATSAPP,
-                chatMessageInfo.timestampSeconds().isPresent() ? chatMessageInfo.timestampSeconds().getAsLong() : null,
-                account,
-                room,
-                builder.build()
+                timestamp,
+                null,
+                stubType
         );
+         */
+        return null;
     }
-    private ExtendedMessageBuilder decodeMessageContainer(String id, MessageInfo payload, MessageContainer messageContainer) {
-        Message base = messageContainer.content();
-        AttachmentType attachmentType = WhatsappMessageTypeTranslator.translateAttachment(messageContainer.type());
-        MessageType messageType = attachmentType == null ? WhatsappMessageTypeTranslator.translate(messageContainer.type()) : MessageType.TEXT_WITH_ATTACHMENTS;
-        ExtendedMessageBuilder builder = new ExtendedMessageBuilder(messageType, id, payload);
 
-        if(messageType == MessageType.TEXT_WITH_ATTACHMENTS) {
-            assert attachmentType != null;
-            builder.text(extractText(base, attachmentType))
-                    .attachments(extractAttachments(base, attachmentType));
-        } else if (messageType == MessageType.TEXT) {
-            builder.text(((TextMessage) base).text());
-        }
-        if(messageContainer.contentWithContext().isPresent() && messageContainer.contentWithContext().get().contextInfo().isPresent()) {
-            ContextInfo context = messageContainer.contentWithContext().get().contextInfo().get();
-            List<Jid> mentions = context.mentions();
-            List<Account> mentionsResult = new ArrayList<>();
-            for(Jid jid  : mentions){
-                Account account = store.getOrCreateAccount(jid.toString(), Platform.WHATSAPP, null);
-                mentionsResult.add(account);
+
+    private MessagePayload decodeMessageContainer(MessageContainer container, MessageContext<R,A> context) {
+        Message message = container.content();
+        switch(container.type()) {
+            case TEXT-> {
+                TextMessage textMessage = (TextMessage) message;
+                return TextMessagePayload.<R, A>builder()
+                        .text(textMessage.text())
+                        .context(context)
+                        .build();
             }
-            builder.mentions(mentionsResult);
+            case VIDEO -> {
+                VideoOrGifMessage videoMessage = (VideoOrGifMessage) message;
+                return TextMessagePayload.<R, A>builder()
+                        .text(videoMessage.caption().orElse(null))
+                        .attachments(Collections.singletonList(new Attachment(videoMessage.mimetype().get(), null, videoMessage)))
+                        .context(context)
+                        .build();
+            }
+            case IMAGE -> {
+                ImageMessage imageMessage = (ImageMessage) message;
+                return TextMessagePayload.<R, A>builder()
+                        .text(imageMessage.caption().orElse(null))
+                        .attachments(Collections.singletonList(new Attachment(imageMessage.mimetype().get(), null, imageMessage)))
+                        .context(context)
+                        .build();
+            }
+            case AUDIO -> {
+                AudioMessage audioMessage = (AudioMessage) message;
+                return TextMessagePayload.<R, A>builder()
+                        .attachments(Collections.singletonList(new Attachment(audioMessage.mimetype().get(), null, audioMessage)))
+                        .context(context)
+                        .build();
+            }
+            case STICKER -> {
+                StickerMessage stickerMessage = (StickerMessage) message;
+                return TextMessagePayload.<R, A>builder()
+                        .attachments(Collections.singletonList(new Attachment(stickerMessage.mimetype().get(), null, stickerMessage)))
+                        .context(context)
+                        .build();
+            }
+            case DOCUMENT -> {
+                DocumentMessage documentMessage = (DocumentMessage) message;
+                return TextMessagePayload.<R, A>builder()
+                        .text(documentMessage.caption().orElse(null))
+                        .attachments(Collections.singletonList(new Attachment(documentMessage.mimetype().get(), null, documentMessage)))
+                        .context(context)
+                        .build();
+            }
+            case REACTION -> {
+                ReactionMessage reactionMessage = (ReactionMessage) message;
+                return new ReactionMessagePayload(
+                        reactionMessage.content(),
+                        null
+                );
+            }
+            case EDITED -> {
+                //FutureMessageContainer
+            }
+            case EPHEMERAL -> {
+                //FutureMessageContainer
+            }
+            case VIEW_ONCE -> {
+                //FutureMessageContainer
+            }
+            case GROUP_INVITE -> {
+                GroupInviteMessage groupInviteMessage = (GroupInviteMessage) message;
+            }
+            case POLL_CREATION -> {
+                PollCreationMessage pollCreationMessage = (PollCreationMessage) message;
+            }
+            case POLL_UPDATE -> {
+                PollUpdateMessage pollUpdateMessage = (PollUpdateMessage) message;
+            }
         }
-        return builder;
+        return null;
     }
 
-    private MediaMessage getMediaMessage(Message base, AttachmentType aType) {
-        return switch (aType) {
-            case VIDEO, GIF -> (VideoOrGifMessage) base;
+    private MediaMessage getMediaMessage(Message base, Message.Type messageType) {
+        return switch (messageType) {
+            case VIDEO -> (VideoOrGifMessage) base;
             case IMAGE -> (ImageMessage) base;
             case DOCUMENT -> (DocumentMessage) base;
             case AUDIO -> (AudioMessage) base;
@@ -135,8 +235,18 @@ public class WhatsappCodec<R extends Room, A extends Account> extends MultiCodec
         };
     }
 
-    private String extractText(Message base, AttachmentType aType) {
-         return switch (aType) {
+    private List<A> extractMentions(List<Jid> originMentions) {
+        List<A> mentions = new LinkedList<>();
+        for(Jid jid : originMentions){
+            A a = store.getOrCreateAccount(jid.toString(), Platform.WHATSAPP, null);
+            mentions.add(a);
+        }
+        return mentions;
+    }
+
+    private String extractText(Message base, Message.Type messageType) {
+        return switch (messageType) {
+            case TEXT -> ((TextMessage) base).text();
             case VIDEO -> ((VideoOrGifMessage) base).caption().orElse(null);
             case IMAGE -> ((ImageMessage) base).caption().orElse(null);
             case DOCUMENT -> ((DocumentMessage) base).caption().orElse(null);
@@ -144,11 +254,10 @@ public class WhatsappCodec<R extends Room, A extends Account> extends MultiCodec
         };
     }
 
-    private List<Attachment> extractAttachments(Message base, AttachmentType aType) {
-        AttachmentBuilder attachmentBuilder = new AttachmentBuilder(aType);
-
-        MutableAttachmentProvider mutableAttachmentProvider = switch (aType) {
-            case VIDEO, GIF -> {
+    private List<Attachment> extractAttachments(Message base, Message.Type messageType) {
+        /*
+        MutableAttachmentProvider mutableAttachmentProvider = switch (messageType) {
+            case VIDEO -> {
                 VideoOrGifMessage m = ((VideoOrGifMessage) base);
                 attachmentBuilder
                         .duration(m.duration().orElse(0))
@@ -202,31 +311,8 @@ public class WhatsappCodec<R extends Room, A extends Account> extends MultiCodec
                 .mediaDirectPath(mutableAttachmentProvider.mediaDirectPath().orElse(null));
 
         return List.of(attachmentBuilder.build());
-    }
 
-    private StubEvent decodeStubNode(Client client, Node node){
-        var child = node.findChild();
-        if (child.isEmpty()) {
-            return null;
-        }
-
-        StubType stubType = StubType.of(child.get().description()).orElse(StubType.UNKNOWN);
-        if (stubType != StubType.UNKNOWN) {
-            return null;
-        }
-
-        var timestamp = node.attributes().getLong("t");
-
-        var fromJid = node.attributes()
-                .getRequiredJid("from");
-        var room = store.getOrCreateRoom(fromJid.toString(), Platform.WHATSAPP, null);
-        return new StubEvent(
-                client,
-                null,
-                Platform.WHATSAPP,
-                timestamp,
-                null,
-                stubType
-        );
+         */
+        return null;
     }
 }

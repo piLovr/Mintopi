@@ -28,13 +28,18 @@ public class JsonTextProvider {
     private Map<String, Map<String, Map<String, Response>>> eventResponses = new HashMap<>(); // "event" -> "key" -> Response
 
     //      Language    Command     CommandResponse
+    private Map<String, Map<String, CommandResponse>> secretCommandResponses = new HashMap<>(); // "miniCommand" -> CommandResponse
+
+    //      Language    Command     CommandResponse
     private Map<String, Map<String, CommandResponse>> miniCommandResponses = new HashMap<>(); // "miniCommand" -> CommandResponse
+
 
     //      Language    Key         Value
     private Map<String, Map<String, String>> otherValues;
 
     private final Map<String, String> commandCategories = new HashMap<>(); // "command" -> "category"
     private final Map<String, String> miniCommandCategories = new HashMap<>(); // "miniCommand" -> "shortDescription"
+    private final Map<String, String> secretCommandCategories = new HashMap<>(); // "miniCommand" -> "shortDescription"
 
     private static String jsonFolderPath;
     private static Map<String, JsonNode> jsonTexts;
@@ -80,7 +85,7 @@ public class JsonTextProvider {
     }
 
     public CommandResponse getMiniCommandResponse(String language, String miniCommandName) {
-        Map<String, CommandResponse> langMiniCommands = miniCommandResponses.get(language);
+        Map<String, CommandResponse> langMiniCommands = secretCommandResponses.get(language);
         if (langMiniCommands == null) return null;
 
         return langMiniCommands.get(miniCommandName);
@@ -159,7 +164,7 @@ public class JsonTextProvider {
 
         commandResponses.put(language, new HashMap<>()); // "command" -> "key" -> CommandResponse
         eventResponses.put(language, new HashMap<>());
-        miniCommandResponses.put(language, new HashMap<>());
+        secretCommandResponses.put(language, new HashMap<>());
         otherValues.put(language, new HashMap<>());
 
         // Parse JSON
@@ -176,6 +181,11 @@ public class JsonTextProvider {
             if (payloadResponses.has("miniCommands")) {
                 JsonNode miniCommandsNode = payloadResponses.get("miniCommands");
                 parseMiniCommandsRecursively(language, miniCommandsNode, "");
+            }
+
+            if(payloadResponses.has("secretCommands")){
+                JsonNode secretCommandsNode = payloadResponses.get("secretCommands");
+                parseSecretCommandsRecursively(language, secretCommandsNode, "");
             }
 
             // Parse events
@@ -266,6 +276,32 @@ public class JsonTextProvider {
                     miniCommandResponses.get(language).put(field, commandResponse);
                 } else {
                     log.warn("Invalid CommandResponse structure for miniCommand '{}'", field);
+                }
+            }
+        });
+    }
+
+    private void parseSecretCommandsRecursively(String language, JsonNode node, String prefix) {
+        node.fieldNames().forEachRemaining(field -> {
+            JsonNode fieldNode = node.get(field);
+
+            if (field.startsWith("_")) {
+                // This is a category - process recursively
+                String categoryName = field.substring(1); // Remove the underscore
+                String newPrefix = prefix.isEmpty() ? categoryName : prefix + "." + categoryName;
+                parseSecretCommandsRecursively(language, fieldNode, newPrefix);
+            } else {
+                // This is a secretCommand
+                secretCommandCategories.put(field, prefix);
+
+                if (fieldNode.has("reaction") && fieldNode.has("short") && fieldNode.has("long")) {
+                    String reaction = fieldNode.get("reaction").asText();
+                    String shortVariant = fieldNode.get("short").asText();
+                    String longVariant = fieldNode.get("long").asText();
+                    CommandResponse commandResponse = new CommandResponse(reaction, shortVariant, longVariant);
+                    secretCommandResponses.get(language).put(field, commandResponse);
+                } else {
+                    log.warn("Invalid CommandResponse structure for secretCommand '{}'", field);
                 }
             }
         });

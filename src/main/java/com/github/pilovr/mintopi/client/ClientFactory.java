@@ -1,11 +1,9 @@
 package com.github.pilovr.mintopi.client;
 
-import com.github.pilovr.mintopi.client.whatsapp.WhatsappClientAdaptee;
-import com.github.pilovr.mintopi.client.whatsapp.WhatsappMobileClientAdaptee;
+import com.github.pilovr.mintopi.client.whatsapp.WhatsappMobileClient;
 import com.github.pilovr.mintopi.store.Store;
 import com.github.pilovr.mintopi.tools.MediaQueue;
 import com.github.pilovr.mintopi.codec.whatsapp.WhatsappCodec;
-import com.github.pilovr.mintopi.listener.Listener;
 import com.github.pilovr.mintopi.listener.WhatsappInternalListener;
 import com.github.pilovr.mintopi.domain.account.Account;
 import com.github.pilovr.mintopi.domain.room.Room;
@@ -38,28 +36,32 @@ public class ClientFactory<R extends Room, A extends Account> {
     }
 
     public Client<R,A> createClient(Platform platform, String alias){
-        Client<R,A> c =  switch(platform){
-            case WHATSAPP, WhatsappMobile ->
-                    platform == Platform.WHATSAPP ? new WhatsappClientAdaptee<>(alias, wIlOP.getObject(), store, decoderOP.getObject(), mediaQueue) : new WhatsappMobileClientAdaptee<>(alias, wIlOP.getObject(),store, decoderOP.getObject(), mediaQueue);
+        var client = switch(platform){
+            case WHATSAPP -> new WhatsappClientAdapteeBackup<>(alias, wIlOP.getObject(), store, decoderOP.getObject(), mediaQueue);
             default -> throw new IllegalArgumentException("Unsupported platform: " + platform);
         };
-        c.addListener(new Listener() {
-            @Override
-            public void onConnected() {
-                clients.add(c);
-                c.setConnected(true);
-            }
+        synchronized (clients) {
+            clients.add(client);
+        }
+        client.connect();
+        return client;
+    }
 
-            @Override
-            public void onDisconnected() {
-                clients.remove(c);
-                c.setConnected(false);
-            }
-        });
-        return c;
+    public Client<R,A> createWhatsappMobileClient(String alias){
+        Client<R,A> client = new WhatsappMobileClient<>(alias, wIlOP.getObject(),store, decoderOP.getObject(), mediaQueue);
+        synchronized (clients) {
+            clients.add(client);
+        }
+        client.connect();
+        return client;
+    }
+    public boolean isAnyClientConnected() {
+        synchronized (clients) {
+            return clients.stream().anyMatch(Client::isConnected);
+        }
     }
     public void waitForAllDisconnects() {
-        while (!clients.isEmpty()) {
+        while (isAnyClientConnected()) {
             try {
                 clients.wait(1000);
             } catch (InterruptedException e) {

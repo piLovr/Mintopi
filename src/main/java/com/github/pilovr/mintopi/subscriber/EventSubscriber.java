@@ -5,6 +5,6 @@ import com.github.pilovr.mintopi.domain.event.EventContext;
 import com.github.pilovr.mintopi.domain.payload.Payload;
 import com.github.pilovr.mintopi.domain.room.Room;
 
-public interface EventSubscriber<R extends Room, A extends Account, P extends Payload> {
-    void onEvent(EventContext<R, A, P> context);
+public interface EventSubscriber<R extends Room, A extends Account> {
+    void onEvent(EventContext<Payload,R, A> context);
 }

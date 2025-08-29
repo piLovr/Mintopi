@@ -31,6 +31,9 @@ public class MediaConverter {
                     Pair.with("image/webp", "image/gif"), "magick %s -coalesce -layers optimize %s"
             )
     );
+    public static boolean isSupportedConversion(String inputMime, String expectedMime){
+        return execs.containsKey(Pair.with(inputMime, expectedMime));
+    }
     public static byte[] convert(byte[] inputMedia, String inputMime, String expectedMime){
         String inputExtension = inputMime.substring(inputMime.lastIndexOf('/') + 1);
         String expectedExtension = expectedMime.substring(expectedMime.lastIndexOf('/') + 1);
@@ -85,14 +88,5 @@ public class MediaConverter {
         } catch (IOException e) {
             throw new RuntimeException("Failed to read or delete temp files", e);
         }
-    }
-
-    public static byte[] convert(byte[] inputMedia, AttachmentType inputType, AttachmentType expectedType) {
-        String inputMime = mimeTypes.get(inputType);
-        String expectedMime = mimeTypes.get(expectedType);
-        if (inputMime == null || expectedMime == null || !execs.containsKey(Pair.with(inputMime, expectedMime))) {
-            throw new IllegalArgumentException("Unsupported media type conversion: " + inputType + " to " + expectedType);
-        }
-        return convert(inputMedia, inputMime, expectedMime);
     }
 }

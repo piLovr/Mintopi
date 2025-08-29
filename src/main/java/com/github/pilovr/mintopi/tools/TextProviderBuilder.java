@@ -39,7 +39,6 @@ public class TextProviderBuilder {
         return this;
     }
 
-    public TextProviderBuilder
 
 
 }

@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Getter
-public class CommandProperties<R extends Room, A extends Account> {
+public class CommandProperties {
     private final String command;
     private final Set<String> args; //HashSet
     private final Set<Character> flags; //HashSet

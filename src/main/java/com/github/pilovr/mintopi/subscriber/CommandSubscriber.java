@@ -7,5 +7,5 @@ import com.github.pilovr.mintopi.domain.payload.message.TextMessagePayload;
 import com.github.pilovr.mintopi.domain.room.Room;
 
 public interface CommandSubscriber<R extends Room, A extends Account> {
-    void onEvent(CommandContext<R, A, TextMessagePayload> context);
+    void onEvent(CommandContext<TextMessagePayload<R,A>,R, A> context);
 }

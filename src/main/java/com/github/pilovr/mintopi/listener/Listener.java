@@ -1,6 +1,9 @@
 package com.github.pilovr.mintopi.listener;
 
 import com.github.pilovr.mintopi.domain.account.Account;
+import com.github.pilovr.mintopi.domain.event.EventContext;
+import com.github.pilovr.mintopi.domain.payload.message.ReactionMessagePayload;
+import com.github.pilovr.mintopi.domain.payload.message.TextMessagePayload;
 import com.github.pilovr.mintopi.domain.room.Room;
 
 import java.util.Scanner;
@@ -14,20 +17,20 @@ public interface Listener<R extends Room, A extends Account> {
         return input;
     }
 
-    default void onMessage(MessageEvent<?, R, A> messageEvent) {
+    default void onMessage(EventContext<?,R,A> messageEvent) {
 
     }
 
-    default void onExtendedMessage(ExtendedMessageEvent<R, A> extendedMessageEvent) {
+    default void onTextMessage(EventContext<TextMessagePayload<A>,R,A> eventContext) {
         // Default implementation can be empty or can be overridden by subclasses
-        System.out.println("Received extended message: " + extendedMessageEvent.getMessage().getText());
+        System.out.println("Received extended message: " + eventContext.getPayload().getText());
     }
 
-    default void onReactionMessage(ReactionMessageEvent<R,A> reactionMessageEvent) {
+    default void onReactionMessage(EventContext<ReactionMessagePayload,R,A> reactionMessageEvent) {
         // Default implementation can be empty or can be overridden by subclasses
     }
 
-    default void onSpecialMessage(MessageEvent<?, R, A> specialMessageEvent) {
+    default void onSpecialMessage(EventContext<?,R,A> specialMessageEvent) {
         // Default implementation can be empty or can be overridden by subclasses
     }
 
@@ -39,7 +42,7 @@ public interface Listener<R extends Room, A extends Account> {
         // Default implementation can be empty or can be overridden by subclasses
     }
 
-    default void onStubEvent(StubEvent stubEvent) {
+    default void onStubEvent(EventContext<?,R,A> stubEvent) {
         // Default implementation can be empty or can be overridden by subclasses
     }
 }
